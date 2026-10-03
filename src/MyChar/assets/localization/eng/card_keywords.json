@@ -1,0 +1,10 @@
+{
+  "MYCHARMOD-PARAMPASSING.title": "Parameter",
+  "MYCHARMOD-PARAMPASSING.description": "When played, writes one effect into the [gold]parameter pool[/gold]. Pooled parameters are consumed by the next [gold]Response[/gold] card and applied to that card's resolution.",
+  "MYCHARMOD-RESPONSE.title": "Response",
+  "MYCHARMOD-RESPONSE.description": "When played, consumes the whole [gold]parameter pool[/gold] and applies every pooled effect to this card's resolution. It can still be played while the pool is empty, just without any parameter bonuses.",
+  "MYCHARMOD-PROTOCOL.title": "Protocol",
+  "MYCHARMOD-PROTOCOL.description": "Layers accumulated during combat. At the start of your turn all layers are consumed and one protocol card is added to your hand by tier: 1-4 -> Alpha, 5-10 -> Beta, 11+ -> Gamma.",
+  "MYCHARMOD-ITERATION.title": "Iterate",
+  "MYCHARMOD-ITERATION.description": "Every time this card is played X times, its Iterate effect is added to this card once, stacking each time, for the rest of this combat (X is shown on the card, e.g. Iterate 1). Reset when combat ends."
+}

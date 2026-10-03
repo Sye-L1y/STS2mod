@@ -1,0 +1,20 @@
+# ---- 构建产物 ----
+bin/
+obj/
+pack/
+
+# ---- 本地工具链（体积大，可重新获取，不入库）----
+# Godot 编辑器 / 导出模板（仅生成动画场景时手动使用，正常编译不需要）
+tools/godot/
+tools/godot-mono.zip
+
+# ---- 反编译参考源码（查 API 用，第三方代码，不入库）----
+ref/
+
+# ---- IDE / 系统 ----
+.vs/
+.idea/
+*.user
+*.suo
+Thumbs.db
+desktop.ini

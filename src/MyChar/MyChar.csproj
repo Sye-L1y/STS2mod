@@ -1,0 +1,96 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    程序集名必须 == mod 的 id（manifest 里的 id），因为游戏按 <modId>.dll 去找程序集。
+    改 id 时请同时改 AssemblyName 与 ExampleChar.json 里的 id（或直接跑 tools\rename-mod.ps1）。
+  -->
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <AssemblyName>MyChar</AssemblyName>
+    <RootNamespace>MyCharMod</RootNamespace>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <EnableDefaultNoneItems>false</EnableDefaultNoneItems>
+  </PropertyGroup>
+
+  <!--
+    PCK 打包：由 BSchneppe.StS2.PckPacker 在 dotnet build 时自动完成，无需安装 Godot。
+      assets/ 下的文件会被打进 <AssemblyName>.pck：
+        .png  -> 转成 Godot .ctex（GST2 头 + 无损 WebP）并生成 .import 重映射
+        .json -> 原样拷贝
+      资源在 pck 内的路径 = res://$(PckPackerResPrefix)/<assets 下的相对路径>
+      所以 assets/images/xxx.png  ->  res://MyChar/images/xxx.png
+    注意：.tscn / .gdshader / .gdscript 不支持，需要动画场景时得改用 Godot 导出。
+  -->
+  <PropertyGroup>
+    <PckPackerSourceDir>assets/</PckPackerSourceDir>
+    <PckPackerResPrefix>MyChar</PckPackerResPrefix>
+    <!-- 关掉包自带的 PackPck：它直接 dotnet exec net9.0 的工具，本机只有 .NET 6/8/10 会报
+         "You must install or update .NET"。下面用自定义 target 带上 DOTNET_ROLL_FORWARD 再调它。 -->
+    <PckPackerEnabled>false</PckPackerEnabled>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="BSchneppe.StS2.PckPacker" Version="0.1.1" PrivateAssets="All" GeneratePathProperty="true" />
+  </ItemGroup>
+
+  <!-- 游戏目录 / BaseLib 目录：默认写死在本机路径，可用 -p:GameDir=... 覆盖 -->
+  <PropertyGroup>
+    <GameDir Condition="'$(GameDir)' == ''">F:\sts2\Slay the Spire 2\data_sts2_windows_x86_64</GameDir>
+    <BaseLibDir Condition="'$(BaseLibDir)' == ''">F:\sts2\Slay the Spire 2\mods\BaseLib.3.4.5</BaseLibDir>
+  </PropertyGroup>
+
+  <Target Name="CheckGameDir" BeforeTargets="ResolveAssemblyReferences">
+    <Error Condition="!Exists('$(GameDir)\sts2.dll')" Text="找不到 $(GameDir)\sts2.dll，请用 -p:GameDir=&quot;你的游戏数据目录&quot; 指定。" />
+    <Error Condition="!Exists('$(BaseLibDir)\BaseLib.dll')" Text="找不到 $(BaseLibDir)\BaseLib.dll，请用 -p:BaseLibDir=&quot;你的 BaseLib 目录&quot; 指定。" />
+  </Target>
+
+  <ItemGroup>
+    <Reference Include="sts2">
+      <HintPath>$(GameDir)\sts2.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="GodotSharp">
+      <HintPath>$(GameDir)\GodotSharp.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="0Harmony">
+      <HintPath>$(GameDir)\0Harmony.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="SmartFormat">
+      <HintPath>$(GameDir)\SmartFormat.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Steamworks.NET">
+      <HintPath>$(GameDir)\Steamworks.NET.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="BaseLib">
+      <HintPath>$(BaseLibDir)\BaseLib.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+
+  <!--
+    自己调 PckPacker 工具打 .pck。
+    DOTNET_ROLL_FORWARD=LatestMajor 让 net9.0 的工具跑在本机的 .NET 10 运行时上。
+    退出码：0 = 成功，2 = 有不支持的文件（跳过），其他 = 失败。
+  -->
+  <Target Name="PackModPck" AfterTargets="Build" Condition="Exists('$(PckPackerSourceDir)')">
+    <Exec Command="&quot;$(DOTNET_HOST_PATH)&quot; &quot;$(PkgBSchneppe_StS2_PckPacker)\tools\net9.0\any\StS2PckPacker.dll&quot; &quot;$(PckPackerSourceDir)&quot; &quot;$(PckPackerResPrefix)&quot; &quot;$(PckPackerOutputPath)&quot;"
+          EnvironmentVariables="DOTNET_ROLL_FORWARD=LatestMajor"
+          IgnoreExitCode="true"
+          ConsoleToMSBuild="true">
+      <Output TaskParameter="ExitCode" PropertyName="_ModPckExit" />
+      <Output TaskParameter="ConsoleOutput" PropertyName="_ModPckOut" />
+    </Exec>
+    <Message Condition="'$(_ModPckExit)' == '0'" Text="PCK packed: $(PckPackerOutputPath)" Importance="high" />
+    <Message Condition="'$(_ModPckExit)' == '2'" Text="PCK 打包跳过（有不支持的文件）。$(_ModPckOut)" Importance="high" />
+    <Error Condition="'$(_ModPckExit)' != '0' And '$(_ModPckExit)' != '2'" Text="PCK 打包失败（exit $(_ModPckExit)）：$(_ModPckOut)" />
+  </Target>
+
+</Project>

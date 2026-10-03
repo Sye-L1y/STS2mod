@@ -1,0 +1,105 @@
+using System.Collections.Generic;
+using BaseLib.Abstracts;
+using Godot;
+using MegaCrit.Sts2.Core.Entities.Characters;
+using MegaCrit.Sts2.Core.Models;
+
+namespace MyCharMod;
+
+/// <summary>
+/// 新角色本体。
+///
+/// 继承 BaseLib 的 PlaceholderCharacterModel：所有立绘 / 图标 / 动画 / 音效默认复用铁甲战士(ironclad)的资源，
+/// 所以第一阶段不需要任何美术资源也能在游戏里跑起来（占位图方案）。
+/// 后续做好真美术后，把基类改成 CustomCharacterModel，再逐个 override Custom* 路径即可。
+///
+/// 类名决定 id：MyChar -> ModelId = "character.MY_CHAR"，本地化 key 为 characters.MY_CHAR.*
+/// </summary>
+public sealed class MyChar : PlaceholderCharacterModel
+{
+    public override string PlaceholderID => "ironclad";
+
+    // —— 自定义美术：只替换"贴图"类资源 ——
+    // 场景类资源（CustomVisualPath 战斗立绘、CustomIconPath 图标场景、能量计数器、休息处/商人动画、
+    // CustomCharacterSelectBg 选人背景）都是 .tscn，PckPacker 不支持打包场景，
+    // 所以继续沿用 PlaceholderID = ironclad 的占位场景。等有真立绘时再改用 Godot 导出。
+    public override string? CustomCharacterSelectIconPath => MyCharAssets.CharacterSelect;
+
+    public override string? CustomCharacterSelectLockedIconPath => MyCharAssets.CharacterSelectLocked;
+
+    /// <summary>顶部栏 / 遗物栏旁的角色头像。</summary>
+    public override string? CustomIconTexturePath => MyCharAssets.CharacterHud;
+
+    /// <summary>上面那张头像的白色剪影，顶部栏用它上色描边。</summary>
+    public override string? CustomIconOutlineTexturePath => MyCharAssets.CharacterHudOutline;
+
+    public override Color NameColor => new("D62000");
+
+    public override CharacterGender Gender => CharacterGender.Neutral;
+
+    public override int StartingHp => 75;
+
+    public override int StartingGold => 99;
+
+    public override CardPoolModel CardPool => ModelDb.CardPool<MyCharCardPool>();
+
+    public override RelicPoolModel RelicPool => ModelDb.RelicPool<MyCharRelicPool>();
+
+    public override PotionPoolModel PotionPool => ModelDb.PotionPool<MyCharPotionPool>();
+
+    /// <summary>
+    /// 起始牌组（见 docs/05 §6.3）：与其它角色一致的 4 打击 + 4 防御打底，
+    /// 再各加一张核心牌：
+    ///   1 × 阿尔法突袭 —— 响应+传参，打出后把池重新填满（自续）
+    ///   1 × 参数激活 —— 点火牌，非响应、只提供传参
+    /// 响应牌池空时打不出，所以点火牌是必须的；但它基础版不带「固有」，
+    /// 第一回合不保证上手，靠打击/防御过渡，升级后才变成固有。
+    /// </summary>
+    public override IEnumerable<CardModel> StartingDeck => new CardModel[]
+    {
+        ModelDb.Card<MyCharStrike>(),
+        ModelDb.Card<MyCharStrike>(),
+        ModelDb.Card<MyCharStrike>(),
+        ModelDb.Card<MyCharStrike>(),
+        ModelDb.Card<MyCharDefend>(),
+        ModelDb.Card<MyCharDefend>(),
+        ModelDb.Card<MyCharDefend>(),
+        ModelDb.Card<MyCharDefend>(),
+        ModelDb.Card<AlphaStrike>(),
+        ModelDb.Card<ParamActivation>(),
+    };
+
+    public override IReadOnlyList<RelicModel> StartingRelics => new RelicModel[]
+    {
+        ModelDb.Relic<MyCharStarterRelic>(),
+    };
+
+    /// <summary>
+    /// 角色文本。BaseLib 会在 ModelDb.Init 时把这些 key 注入到 characters 表里，
+    /// 所以不需要 pck / json 文件也能正常显示。
+    /// key 由类名推导：MyChar -> characters.MY_CHAR.*
+    ///
+    /// 注意：这里只能提供"一种语言"。要多语言时，改为在 pck 里放
+    /// localization/<lang>/characters.json（见 docs/03-本地化约定.md）。
+    /// </summary>
+    public override List<(string, string)>? Localization => new CharacterLoc(
+        Title: "阿尔法机",
+        TitleObject: "阿尔法机",
+        Description: "一台以「传参」自我改写的机械。每一次响应都消费掉积累的参数，\n每一次迭代都把自己往更强处重写一行。",
+        PronounObject: "它",
+        PronounSubject: "它",
+        PronounPossessive: "它的",
+        PossessiveAdjective: "它的",
+        AromaPrinciple: "[sine][purple]参数到位，响应即至。[/purple][/sine]",
+        EndTurnPingAlive: "[sine]继续迭代。[/sine]",
+        EndTurnPingDead: "……",
+        EventDeathPrevention: "核心尚未停机。",
+        GoldMonologue: "[sine]还需要更多参数。[/sine]",
+        CardsModifierTitle: "阿尔法机卡牌",
+        CardsModifierDescription: "奖励与商店中会出现阿尔法机卡牌。",
+        ExtraLoc: new[]
+        {
+            ("unlockText", "阿尔法机已可供选择。"),
+            ("bestiaryQuote", "参数到位，响应即至。"),
+        });
+}
