@@ -37,9 +37,10 @@ public sealed class FinalEchoStimulus : AlphaCard
 
     protected override async Task PlayEffect(PlayerChoiceContext choiceContext, CardPlay cardPlay)
     {
-        await PowerCmd.Apply<FinalEchoStimulusPower>(choiceContext, Owner.Creature, 1m, Owner.Creature, this);
-        Owner.Creature.GetPower<FinalEchoStimulusPower>()
-            ?.Configure(DynamicVars["StrengthLoss"].IntValue, DynamicVars["Doom"].IntValue);
+        // 用 Apply 的返回值写参数：它拿到的就是本次生效的那个实例（已有则返回已存在的那个）。
+        FinalEchoStimulusPower? power = await PowerCmd.Apply<FinalEchoStimulusPower>(
+            choiceContext, Owner.Creature, 1m, Owner.Creature, this);
+        power?.Configure(DynamicVars["StrengthLoss"].IntValue, DynamicVars["Doom"].IntValue);
     }
 
     protected override void OnUpgrade()

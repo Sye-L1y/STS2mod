@@ -21,8 +21,9 @@ namespace MyCharMod.Mechanics;
 ///
 /// 监听 E17「协议消耗」事件——无论消耗来自回合结算还是协议消耗牌（歼灭龙息 / 紧急护壁 / 龙吼模块）。
 ///
-/// **叠加**：<see cref="PowerStackType.Counter"/>，份数记在 <see cref="PowerModel.Amount"/>，
-/// 每层协议消耗给的灾厄层数 = 卡面值 × 份数，状态栏数字即份数。
+/// **叠加**：触发条件完全一致（都是「协议消耗」），所以多张合并成一条，**数值相加**：
+/// 基础 + 升级 = 每层消耗给 3+5=8 层灾厄。份数记在 <see cref="PowerModel.Amount"/>（状态栏数字即份数），
+/// 累加值记在 <see cref="DynamicVars"/>["Doom"]，悬浮说明按累加后的值渲染。
 /// </summary>
 public sealed class CalamityCoveragePower : CustomPowerModel, IAlphaProtocolConsumeListener,
     IAddDumbVariablesToPowerDescription
@@ -37,9 +38,10 @@ public sealed class CalamityCoveragePower : CustomPowerModel, IAlphaProtocolCons
 
     public override string? CustomBigIconPath => MyCharAssets.Power("protocol");
 
+    /// <summary>初值 0：本值是「各份打出的数值之和」，由 <see cref="Configure"/> 累加，不是卡面值。</summary>
     protected override IEnumerable<DynamicVar> CanonicalVars => new DynamicVar[]
     {
-        new DynamicVar("Doom", 3m),
+        new DynamicVar("Doom", 0m),
     };
 
     public override List<(string, string)>? Localization => new()
@@ -48,14 +50,14 @@ public sealed class CalamityCoveragePower : CustomPowerModel, IAlphaProtocolCons
         ("description", "消耗[gold]协议[/gold]时，每消耗1层，随机给予一个敌人{Doom}层[gold]灾厄[/gold]。"),
     };
 
-    /// <summary>本牌重复打出的份数（Counter 叠层层数）：先打出的那张为 1。</summary>
-    private int Copies => System.Math.Max(1, Amount);
-
     public void AddDumbVariablesToPowerDescription(LocString description) =>
-        description.Add("Doom", DynamicVars["Doom"].IntValue * Copies);
+        description.Add("Doom", DynamicVars["Doom"].IntValue);
 
-    /// <summary>由「厄难覆盖」卡牌在打出时写入每层消耗给的灾厄层数（本牌升级后更高）。</summary>
-    public void Configure(int doom) => DynamicVars["Doom"].BaseValue = doom;
+    /// <summary>
+    /// 由「厄难覆盖」卡牌在打出时写入本份的灾厄层数（本牌升级后更高）。
+    /// 累加而非覆盖：多张打出时数值相加（触发条件一致，合并成一条）。
+    /// </summary>
+    public void Configure(int doom) => DynamicVars["Doom"].BaseValue += doom;
 
     public async Task OnAlphaProtocolConsumed(PlayerChoiceContext choiceContext, Player player, int layers)
     {
@@ -75,7 +77,7 @@ public sealed class CalamityCoveragePower : CustomPowerModel, IAlphaProtocolCons
             return;
         }
 
-        decimal doom = DynamicVars["Doom"].BaseValue * Copies;
+        decimal doom = DynamicVars["Doom"].BaseValue;
         for (int i = 0; i < layers; i++)
         {
             Creature? target = player.RunState.Rng.CombatTargets.NextItem(enemies);

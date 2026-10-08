@@ -36,8 +36,10 @@ public sealed class CalamityCoverage : AlphaCard
 
     protected override async Task PlayEffect(PlayerChoiceContext choiceContext, CardPlay cardPlay)
     {
-        await PowerCmd.Apply<CalamityCoveragePower>(choiceContext, Owner.Creature, 1m, Owner.Creature, this);
-        Owner.Creature.GetPower<CalamityCoveragePower>()?.Configure(DynamicVars["Doom"].IntValue);
+        // 用 Apply 的返回值写参数：它拿到的就是本次生效的那个实例（已有则返回已存在的那个）。
+        CalamityCoveragePower? power = await PowerCmd.Apply<CalamityCoveragePower>(
+            choiceContext, Owner.Creature, 1m, Owner.Creature, this);
+        power?.Configure(DynamicVars["Doom"].IntValue);
     }
 
     protected override void OnUpgrade() => DynamicVars["Doom"].UpgradeValueBy(2m);

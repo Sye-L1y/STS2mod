@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using BaseLib.Abstracts;
 using BaseLib.Utils;
@@ -14,7 +15,9 @@ namespace MyCharMod;
 /// 稀有能力和「优美公式」：本场战斗中，所有**已完成[gold]迭代[/gold]次数 ≥ 3（升级后 2）**的
 /// [gold]迭代[/gold]牌费用 −1。
 /// **升级只降低门槛（3 → 2），不降费**（费用恒定 2）。
-/// 重复打出按份数叠加：打 N 份就是费用 −N（见 <see cref="ElegantFormulaPower"/>）。
+///
+/// 门槛不同 = 触发条件不同，所以不能合并：同门槛的份数归并到一条状态栏上（降费额度 = 份数），
+/// 基础牌与升级牌各占一条。见 <see cref="ElegantFormulaPower"/>。
 /// </summary>
 [Pool(typeof(MyCharCardPool))]
 public sealed class ElegantFormula : AlphaCard
@@ -38,8 +41,22 @@ public sealed class ElegantFormula : AlphaCard
 
     protected override async Task PlayEffect(PlayerChoiceContext choiceContext, CardPlay cardPlay)
     {
-        await PowerCmd.Apply<ElegantFormulaPower>(choiceContext, Owner.Creature, 1m, Owner.Creature, this);
-        Owner.Creature.GetPower<ElegantFormulaPower>()?.Configure(DynamicVars["Threshold"].IntValue);
+        int threshold = DynamicVars["Threshold"].IntValue;
+
+        // 同门槛的份数归并到同一个载体上；门槛不同（3 vs 2）则各占一条状态栏。
+        // 这里必须用 GetPowerInstances（实例化后 GetPower 只返回第一个，会写到别的门槛身上）。
+        ElegantFormulaPower? same = Owner.Creature
+            .GetPowerInstances<ElegantFormulaPower>()
+            .FirstOrDefault(power => power.IterationThreshold == threshold);
+        if (same != null)
+        {
+            same.AddCopy();
+            return;
+        }
+
+        ElegantFormulaPower? applied = await PowerCmd.Apply<ElegantFormulaPower>(
+            choiceContext, Owner.Creature, 1m, Owner.Creature, this);
+        applied?.Configure(threshold);
     }
 
     protected override void OnUpgrade()

@@ -15,7 +15,8 @@ namespace MyCharMod.Mechanics;
 /// <summary>
 /// 「完全形态」的载体：
 ///   1) 迭代牌完成一次迭代时，给所有迭代牌 +N 计数（每回合一次，N = 份数）；
-///   2) 响应牌触发响应时，按份数返还本次消耗的随机传参（每条只返还一次，互不重复）。
+///   2) 响应牌触发响应时，按份数返还本次消耗的传参 —— **每次独立随机取一条，可以重复**
+///      （不去重、也不要求互不重复：同一份消耗可以被返还多次）。
 ///
 /// **叠加**：<see cref="PowerStackType.Counter"/>，份数记在 <see cref="PowerModel.Amount"/>，
 /// 推进格数与返还条数都 = 份数（推进每回合仍只触发一次），状态栏数字即份数。
@@ -36,7 +37,7 @@ public sealed class FullFormPower : CustomPowerModel, IAlphaIterationListener, I
     public override List<(string, string)>? Localization => new()
     {
         ("title", "完全形态"),
-        ("description", "迭代牌完成迭代时，所有迭代牌计数+{Advance}（每回合一次）；响应牌响应时，按本牌层数返还本次消耗的[gold]传参[/gold]（互不重复）。"),
+        ("description", "迭代牌完成迭代时，所有迭代牌计数+{Advance}（每回合一次）；响应牌响应时，按本牌层数随机返还本次消耗的[gold]传参[/gold]（每次独立随机，可重复）。"),
     };
 
     /// <summary>本牌重复打出的份数（Counter 叠层层数）：先打出的那张为 1。</summary>
@@ -106,32 +107,19 @@ public sealed class FullFormPower : CustomPowerModel, IAlphaIterationListener, I
             return;
         }
 
-        // 先按值去重：同一条传参被本次响应重复消耗时只算一条。
-        // ParamEntry 是 class（默认按引用判等），同一效果写出来的两条是不同对象，所以要手动比值。
-        List<ParamEntry> candidates = new();
-        foreach (ParamEntry consumed in core.LastConsumed)
-        {
-            if (!candidates.Any(existing => SameParam(existing, consumed)))
-            {
-                candidates.Add(consumed);
-            }
-        }
+        // 快照候选：AddParamWithHook 会往池里写并可能改动 LastConsumed，
+        // 直接遍历会读到自己刚写进去的内容。
+        List<ParamEntry> consumed = core.LastConsumed.ToList();
 
-        // 随机挑 Copies 条，挑走的立刻移出候选 —— 保证不会把同一条返还 N 次。
-        int want = System.Math.Min(Copies, candidates.Count);
-        for (int i = 0; i < want; i++)
+        // 每次独立随机取一条，允许重复 —— 同一条消耗可能被返还多次。
+        for (int i = 0; i < Copies; i++)
         {
-            ParamEntry? entry = player.RunState.Rng.CombatTargets.NextItem(candidates);
+            ParamEntry? entry = player.RunState.Rng.CombatTargets.NextItem(consumed);
             if (entry == null)
             {
                 break;
             }
-            candidates.Remove(entry);
             await core.AddParamWithHook(choiceContext, entry);
         }
     }
-
-    /// <summary>传参条目按值判等（<see cref="ParamEntry"/> 是 class，默认只比引用）。</summary>
-    private static bool SameParam(ParamEntry a, ParamEntry b) =>
-        a.Kind == b.Kind && a.Value == b.Value && a.Variant == b.Variant && a.SourceId == b.SourceId;
 }

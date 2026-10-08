@@ -22,8 +22,9 @@ namespace MyCharMod.Mechanics;
 ///
 /// 监听 E18「传参入池」与 E2「响应触发」两个事件。数值由卡牌打出时经 <see cref="Configure"/> 写入。
 ///
-/// **叠加**：<see cref="PowerStackType.Counter"/>，份数记在 <see cref="PowerModel.Amount"/>，
-/// 失力量与灾厄数值均 × 份数，状态栏数字即份数。
+/// **叠加**：两处触发条件都完全一致，所以多张合并成一条、**数值相加**
+/// （基础 + 升级 = 失力 1+2=3、灾厄 5+7=12）。份数记在 <see cref="PowerModel.Amount"/>（状态栏数字即份数），
+/// 累加值分别记在 <see cref="DynamicVars"/> 的 StrengthLoss / Doom，悬浮说明按累加后的值渲染。
 /// </summary>
 public sealed class FinalEchoStimulusPower : CustomPowerModel, IAlphaParamListener, IAlphaResponseListener,
     IAddDumbVariablesToPowerDescription
@@ -38,10 +39,11 @@ public sealed class FinalEchoStimulusPower : CustomPowerModel, IAlphaParamListen
 
     public override string? CustomBigIconPath => MyCharAssets.Power("param_iteration");
 
+    /// <summary>初值 0：这两个值是「各份打出的数值之和」，由 <see cref="Configure"/> 累加，不是卡面值。</summary>
     protected override IEnumerable<DynamicVar> CanonicalVars => new DynamicVar[]
     {
-        new DynamicVar("StrengthLoss", 1m),
-        new DynamicVar("Doom", 5m),
+        new DynamicVar("StrengthLoss", 0m),
+        new DynamicVar("Doom", 0m),
     };
 
     public override List<(string, string)>? Localization => new()
@@ -50,20 +52,20 @@ public sealed class FinalEchoStimulusPower : CustomPowerModel, IAlphaParamListen
         ("description", "[gold]传参[/gold]时，所有敌人本回合失去{StrengthLoss}点[gold]力量[/gold]；触发[gold]响应[/gold]时，所有敌人获得{Doom}层[gold]灾厄[/gold]。"),
     };
 
-    /// <summary>本牌重复打出的份数（Counter 叠层层数）：先打出的那张为 1。</summary>
-    private int Copies => System.Math.Max(1, Amount);
-
     public void AddDumbVariablesToPowerDescription(LocString description)
     {
-        description.Add("StrengthLoss", DynamicVars["StrengthLoss"].IntValue * Copies);
-        description.Add("Doom", DynamicVars["Doom"].IntValue * Copies);
+        description.Add("StrengthLoss", DynamicVars["StrengthLoss"].IntValue);
+        description.Add("Doom", DynamicVars["Doom"].IntValue);
     }
 
-    /// <summary>由「终响激发」卡牌在打出时写入失力量与灾厄数值（本牌升级后更高）。</summary>
+    /// <summary>
+    /// 由「终响激发」卡牌在打出时写入本份的失力量与灾厄数值（本牌升级后更高）。
+    /// 累加而非覆盖：多张打出时数值相加（触发条件一致，合并成一条）。
+    /// </summary>
     public void Configure(int strengthLoss, int doom)
     {
-        DynamicVars["StrengthLoss"].BaseValue = strengthLoss;
-        DynamicVars["Doom"].BaseValue = doom;
+        DynamicVars["StrengthLoss"].BaseValue += strengthLoss;
+        DynamicVars["Doom"].BaseValue += doom;
     }
 
     public async Task OnAlphaParamAdded(PlayerChoiceContext choiceContext, Player player, ParamEntry entry)
@@ -78,7 +80,7 @@ public sealed class FinalEchoStimulusPower : CustomPowerModel, IAlphaParamListen
             return;
         }
 
-        decimal loss = DynamicVars["StrengthLoss"].BaseValue * Copies;
+        decimal loss = DynamicVars["StrengthLoss"].BaseValue;
         foreach (Creature enemy in combatState.HittableEnemies)
         {
             await PowerCmd.Apply<PiercingWailPower>(choiceContext, enemy, loss, Owner, null);
@@ -94,7 +96,7 @@ public sealed class FinalEchoStimulusPower : CustomPowerModel, IAlphaParamListen
             return;
         }
 
-        decimal doom = DynamicVars["Doom"].BaseValue * Copies;
+        decimal doom = DynamicVars["Doom"].BaseValue;
         foreach (Creature enemy in combatState.HittableEnemies)
         {
             await PowerCmd.Apply<DoomPower>(choiceContext, enemy, doom, Owner, null);
