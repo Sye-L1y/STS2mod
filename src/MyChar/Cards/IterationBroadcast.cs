@@ -12,8 +12,12 @@ namespace MyCharMod;
 
 /// <summary>
 /// 罕见能力「高阶洞察」：本场战斗中，每当迭代牌完成 {IterEvery}（升级 2）次[gold]迭代[/gold]，
-/// 就往传参池里塞一条「给全体敌人 1（2） 层[gold]虚弱[/gold]一次」。
+/// 就往传参池里塞一条「给全体敌人 1（2）层[gold]虚弱[/gold]」。
 /// 由 <see cref="IterationBroadcastPower"/> 监听迭代完成事件（E3）。
+///
+/// 每次打出生成一个**独立**载体（见 <see cref="IterationBroadcastPower.InstanceType"/>）：
+/// 升级前后的迭代阈值不同（3 / 2），必须各记各的计数器，不能合并成一条。
+/// 所以阈值要写到**本次返回的那个实例**上，不能写 <c>GetPower&lt;T&gt;()</c> 拿到的第一个。
 /// </summary>
 [Pool(typeof(MyCharCardPool))]
 public sealed class IterationBroadcast : AlphaCard
@@ -38,8 +42,8 @@ public sealed class IterationBroadcast : AlphaCard
 
     protected override async Task PlayEffect(PlayerChoiceContext choiceContext, CardPlay cardPlay)
     {
-        await PowerCmd.Apply<IterationBroadcastPower>(choiceContext, Owner.Creature, 1m, Owner.Creature, this);
-        IterationBroadcastPower? power = Owner.Creature.GetPower<IterationBroadcastPower>();
+        IterationBroadcastPower? power = await PowerCmd.Apply<IterationBroadcastPower>(
+            choiceContext, Owner.Creature, 1m, Owner.Creature, this);
         if (power != null)
         {
             power.Core.WeakLayers = (int)DynamicVars["Weak"].BaseValue;

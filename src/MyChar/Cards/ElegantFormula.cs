@@ -12,7 +12,9 @@ namespace MyCharMod;
 
 /// <summary>
 /// 稀有能力和「优美公式」：本场战斗中，所有**已完成[gold]迭代[/gold]次数 ≥ 3（升级后 2）**的
-/// [gold]迭代[/gold]牌费用 −1。升级只减费（2 → 1）并降低门槛（3 → 2）。
+/// [gold]迭代[/gold]牌费用 −1。
+/// **升级只降低门槛（3 → 2），不降费**（费用恒定 2）。
+/// 重复打出按份数叠加：打 N 份就是费用 −N（见 <see cref="ElegantFormulaPower"/>）。
 /// </summary>
 [Pool(typeof(MyCharCardPool))]
 public sealed class ElegantFormula : AlphaCard
@@ -42,7 +44,6 @@ public sealed class ElegantFormula : AlphaCard
 
     protected override void OnUpgrade()
     {
-        EnergyCost.UpgradeBy(-1);
         DynamicVars["Threshold"].UpgradeValueBy(-1m);
     }
 }

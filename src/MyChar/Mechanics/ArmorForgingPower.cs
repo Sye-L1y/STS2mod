@@ -16,13 +16,14 @@ namespace MyCharMod.Mechanics;
 /// 「甲胄铸造」的载体：每累计完成 <see cref="Data.IterEvery"/> 次迭代，就获得 1 层覆甲。
 /// 走 <see cref="IAlphaIterationListener"/> 监听，不自己产出迭代。
 ///
-/// **叠加**：<see cref="PowerStackType.Counter"/>，份数记在 <see cref="PowerModel.Amount"/>，
-/// 每次触发的覆甲层数 = 份数，状态栏数字即份数。
+/// **独立实例**（<see cref="PowerInstanceType.Instanced"/>）：本牌每打出一次就多一个独立载体，
+/// 各自记自己的 <see cref="Data.Counter"/> 与 <see cref="Data.IterEvery"/>（升级后 1、未升级 2）。
+/// 不能合并——合并会让两张不同升级档的牌共用同一个计数器和阈值。
 /// </summary>
 public sealed class ArmorForgingPower : CustomPowerModel, IAlphaIterationListener,
     IAddDumbVariablesToPowerDescription
 {
-    /// <summary>本场战斗内可变状态（Power 的单例数量承载不了层数，另存一份）。</summary>
+    /// <summary>本载体自己的对战内状态。</summary>
     public sealed class Data
     {
         /// <summary>触发一次覆甲所需的迭代次数（初始 2，升级后 1）。</summary>
@@ -34,7 +35,9 @@ public sealed class ArmorForgingPower : CustomPowerModel, IAlphaIterationListene
 
     public override PowerType Type => PowerType.Buff;
 
-    public override PowerStackType StackType => PowerStackType.Counter;
+    public override PowerInstanceType InstanceType => PowerInstanceType.Instanced;
+
+    public override PowerStackType StackType => PowerStackType.Single;
 
     public override bool ShouldScaleInMultiplayer => false;
 
@@ -45,21 +48,15 @@ public sealed class ArmorForgingPower : CustomPowerModel, IAlphaIterationListene
     public override List<(string, string)>? Localization => new()
     {
         ("title", "甲胄铸造"),
-        ("description", "每完成{IterEvery}次[gold]迭代[/gold]，获得{Plating}层[gold]覆甲[/gold]。"),
+        ("description", "每完成{IterEvery}次[gold]迭代[/gold]，获得1层[gold]覆甲[/gold]。"),
     };
 
     protected override object? InitInternalData() => new Data();
 
     public Data Core => GetInternalData<Data>();
 
-    /// <summary>本牌重复打出的份数（Counter 叠层层数）：先打出的那张为 1。</summary>
-    private int Copies => System.Math.Max(1, Amount);
-
-    public void AddDumbVariablesToPowerDescription(LocString description)
-    {
+    public void AddDumbVariablesToPowerDescription(LocString description) =>
         description.Add("IterEvery", Core.IterEvery);
-        description.Add("Plating", Copies);
-    }
 
     public async Task OnAlphaIteration(PlayerChoiceContext choiceContext, CardModel card)
     {
@@ -70,6 +67,6 @@ public sealed class ArmorForgingPower : CustomPowerModel, IAlphaIterationListene
             return;
         }
         Core.Counter -= every;
-        await PowerCmd.Apply<PlatingPower>(choiceContext, Owner, Copies, Owner, null);
+        await PowerCmd.Apply<PlatingPower>(choiceContext, Owner, 1m, Owner, null);
     }
 }

@@ -11,21 +11,28 @@ using MyCharMod.Mechanics;
 
 namespace MyCharMod;
 
-/// <summary>普通运转技能：按传参池条数抽牌，池越满抽得越多（上限 5 张，升级 6 张）。</summary>
+/// <summary>
+/// 普通运转技能：抽 X 张牌（最多 5 张），X = 当前[gold]传参池[/gold]条数。
+///
+/// 升级：费用 1 → 0，并且 **X +1**；**上限仍是 5 张，不随升级变大**——
+/// 先算完 X（含升级的 +1）再夹上限，所以「池子够满」时升级不额外多抽（都是 5）。
+/// </summary>
 [Pool(typeof(MyCharCardPool))]
 public sealed class Assessment : AlphaCard
 {
+    /// <summary>抽牌上限。升级不改变它。</summary>
+    private const int DrawCap = 5;
+
     protected override IEnumerable<DynamicVar> CanonicalVars => new DynamicVar[]
     {
-        // 抽牌上限做成动态变量：升级 +1 会以绿字 ({Cap:diff()}) 反映在卡面上。
-        new DynamicVar("Cap", 5m),
+        new DynamicVar("Cap", DrawCap),
     };
 
     public override string? CustomPortraitPath => MyCharAssets.Card("assessment");
 
     public override List<(string, string)>? Localization => new CardLoc(
         "评估",
-        "抽 X 张牌（最多{Cap:diff()}张），X 为当前[gold]传参池[/gold]中的传参数。",
+        "抽 X{IfUpgraded:show:+1|} 张牌（最多{Cap}张），X 为当前[gold]传参池[/gold]中的传参数。",
         ("flavor", "先数一遍池子里有什么，再决定怎么用。"));
 
     public Assessment()
@@ -40,17 +47,16 @@ public sealed class Assessment : AlphaCard
         {
             x += 1;
         }
-        x = Math.Min(x, DynamicVars["Cap"].IntValue);
+        x = Math.Min(x, DrawCap);
         if (x > 0)
         {
             await CardPileCmd.Draw(choiceContext, x, Owner);
         }
     }
 
-    /// <summary>升级同时降费（1 → 0）与多抽 1 张（上限 5 → 6）。</summary>
+    /// <summary>升级只降费（1 → 0）。多抽的 1 张由卡面描述里的 X+1 体现，上限不变。</summary>
     protected override void OnUpgrade()
     {
         EnergyCost.UpgradeBy(-1);
-        DynamicVars["Cap"].UpgradeValueBy(1m);
     }
 }

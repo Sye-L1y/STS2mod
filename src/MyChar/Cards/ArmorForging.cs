@@ -13,6 +13,9 @@ namespace MyCharMod;
 /// <summary>
 /// 罕见能力「甲胄铸造」：每完成 2（升级 1）次[gold]迭代[/gold]，获得 1 层[gold]覆甲[/gold]。
 /// 由 <see cref="ArmorForgingPower"/> 监听迭代完成事件（E3）。
+///
+/// 每次打出生成一个**独立**载体（见 <see cref="ArmorForgingPower.InstanceType"/>），
+/// 所以要把阈值写到**本次返回的那个实例**上，不能写 <c>GetPower&lt;T&gt;()</c> 拿到的第一个。
 /// </summary>
 [Pool(typeof(MyCharCardPool))]
 public sealed class ArmorForging : AlphaCard
@@ -36,8 +39,8 @@ public sealed class ArmorForging : AlphaCard
 
     protected override async Task PlayEffect(PlayerChoiceContext choiceContext, CardPlay cardPlay)
     {
-        await PowerCmd.Apply<ArmorForgingPower>(choiceContext, Owner.Creature, 1m, Owner.Creature, this);
-        ArmorForgingPower? power = Owner.Creature.GetPower<ArmorForgingPower>();
+        ArmorForgingPower? power = await PowerCmd.Apply<ArmorForgingPower>(
+            choiceContext, Owner.Creature, 1m, Owner.Creature, this);
         if (power != null)
         {
             power.Core.IterEvery = (int)DynamicVars["IterEvery"].BaseValue;
