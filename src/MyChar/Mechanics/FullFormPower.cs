@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using BaseLib.Abstracts;
 using MegaCrit.Sts2.Core.Entities.Cards;
@@ -50,53 +51,53 @@ public sealed class FullFormPower : CustomPowerModel, IAlphaIterationListener, I
         return Task.CompletedTask;
     }
 
-    public Task OnAlphaIteration(PlayerChoiceContext choiceContext, CardModel card)
+    public async Task OnAlphaIteration(PlayerChoiceContext choiceContext, CardModel card)
     {
         if (Core.UsedThisTurn)
         {
-            return Task.CompletedTask;
+            return;
         }
 
         Player? player = Owner.Player;
         AlphaCorePower? core = player == null ? null : AlphaCorePower.Of(player);
         if (player == null || core == null)
         {
-            return Task.CompletedTask;
+            return;
         }
 
-        bool any = false;
+        // 先置位再推进：AdvanceIteration 会广播迭代完成 → 又回到本监听者，
+        // 不先置位会无限递归。
+        Core.UsedThisTurn = true;
+
+        // 先把要推进的牌收集成快照，再逐张推进：推进过程中某张牌的迭代效果可能移动牌
+        // （抽牌 / 生成 / 回手），惰性遍历牌堆会在牌堆变动时漏项甚至中断，表现为「只更新了一半的堆」。
+        List<AlphaCard> targets = new();
         foreach (PileType pile in new[] { PileType.Hand, PileType.Draw, PileType.Discard })
         {
-            foreach (CardModel candidate in CardPile.GetCards(player, pile))
-            {
-                if (candidate is AlphaCard { IterationEvery: > 0 })
-                {
-                    core.AddPlayCount(candidate, 1);
-                    any = true;
-                }
-            }
+            targets.AddRange(CardPile.GetCards(player, pile)
+                .OfType<AlphaCard>()
+                .Where(candidate => candidate.IterationEvery > 0));
         }
-        if (any)
+
+        foreach (AlphaCard target in targets)
         {
-            Core.UsedThisTurn = true;
+            await core.AdvanceIteration(choiceContext, target, 1);
         }
-        return Task.CompletedTask;
     }
 
-    public Task OnAlphaResponse(PlayerChoiceContext choiceContext, CardModel card)
+    public async Task OnAlphaResponse(PlayerChoiceContext choiceContext, CardModel card)
     {
         Player? player = Owner.Player;
         AlphaCorePower? core = player == null ? null : AlphaCorePower.Of(player);
         if (player == null || core == null || core.LastConsumed.Count == 0)
         {
-            return Task.CompletedTask;
+            return;
         }
 
         ParamEntry? entry = player.RunState.Rng.CombatTargets.NextItem(core.LastConsumed);
         if (entry != null)
         {
-            core.AddParam(entry);
+            await core.AddParamWithHook(choiceContext, entry);
         }
-        return Task.CompletedTask;
     }
 }

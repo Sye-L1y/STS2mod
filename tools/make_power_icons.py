@@ -27,6 +27,12 @@ JOBS = [
     ("protocol_resonance", (140, 160, 236)),
     ("sustained_protocol", (176, 128, 214)),
     ("full_form", (176, 128, 214)),
+    # —— 批次 1 / 批次 2 能力 ——
+    ("duospace_positioning", (198, 84, 72)),
+    ("infiltration", (96, 196, 196)),
+    ("armor_forging", (200, 170, 96)),
+    ("personality_training", (196, 110, 196)),
+    ("fast_iteration", (120, 196, 150)),
 ]
 
 
@@ -109,6 +115,11 @@ def main() -> None:
         "protocol_resonance": draw_protocol,
         "sustained_protocol": draw_protocol,
         "full_form": draw_protocol,
+        "duospace_positioning": draw_protocol,
+        "infiltration": draw_protocol,
+        "armor_forging": draw_protocol,
+        "personality_training": draw_protocol,
+        "fast_iteration": draw_protocol,
     }
     for stem, accent in JOBS:
         img = drawers[stem](accent)

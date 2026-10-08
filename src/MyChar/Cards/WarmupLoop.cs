@@ -18,7 +18,7 @@ public sealed class WarmupLoop : AlphaCard
     protected override IEnumerable<DynamicVar> CanonicalVars => new DynamicVar[]
     {
         new DynamicVar("Draw", 2m),
-        new DynamicVar("Boost", 1m),
+        new DynamicVar("Boost", 2m),
     };
 
     public override string? CustomPortraitPath => MyCharAssets.Card("warmup_loop");
@@ -49,13 +49,13 @@ public sealed class WarmupLoop : AlphaCard
         {
             if (card is AlphaCard { IterationEvery: > 0 })
             {
-                core.AddPlayCount(card, boost);
+                await core.AdvanceIteration(choiceContext, card, boost);
             }
         }
     }
 
     protected override void OnUpgrade()
     {
-        DynamicVars["Boost"].UpgradeValueBy(1m);
+        DynamicVars["Boost"].UpgradeValueBy(2m);
     }
 }

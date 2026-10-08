@@ -2,7 +2,7 @@
   "MYCHARMOD-PARAMPASSING.title": "传参",
   "MYCHARMOD-PARAMPASSING.description": "打出时，把一条效果写进[gold]传参池[/gold]。池中的传参会在下一张[gold]响应[/gold]牌打出时被消费，作用在那张牌本次结算上。",
   "MYCHARMOD-RESPONSE.title": "响应",
-  "MYCHARMOD-RESPONSE.description": "打出时消费整池[gold]传参池[/gold]，把池中每条传参的效果都作用在这张牌本次结算上。池空时也能打出，只是吃不到传参加成，不会卡在手里。",
+  "MYCHARMOD-RESPONSE.description": "打出时消费整池[gold]传参池[/gold]，把池中每条传参的效果都作用在这张牌本次结算上。池空时也能打出。",
   "MYCHARMOD-PROTOCOL.title": "协议",
   "MYCHARMOD-PROTOCOL.description": "战斗内累积的层数。回合开始时消耗全部层数，按档位把一张协议牌加入手牌：1-4 层 → α协议，5-10 层 → β协议，11 层及以上 → γ协议。",
   "MYCHARMOD-ITERATION.title": "迭代",

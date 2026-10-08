@@ -10,7 +10,7 @@ using MyCharMod.Mechanics;
 
 namespace MyCharMod;
 
-/// <summary>罕见技能：当场拿到协议层数，再把「抽一张」留到下回合补节奏。</summary>
+/// <summary>罕见技能：当场拿到协议层数，下回合协议结算后按该回合消耗总量的一半返还协议。</summary>
 [Pool(typeof(MyCharCardPool))]
 public sealed class BackupProtocol : AlphaCard
 {
@@ -25,7 +25,7 @@ public sealed class BackupProtocol : AlphaCard
 
     public override List<(string, string)>? Localization => new CardLoc(
         "备用协议",
-        "获得{Protocol:diff()}层[gold]协议[/gold]。下回合抽1张牌。",
+        "获得{Protocol:diff()}层[gold]协议[/gold]。下回合[gold]协议[/gold]结算后，返还该回合结算消耗量一半的[gold]协议[/gold]。",
         ("flavor", "总得留一条后路，等下回合再走。"));
 
     public BackupProtocol()
@@ -36,8 +36,8 @@ public sealed class BackupProtocol : AlphaCard
     protected override async Task PlayEffect(PlayerChoiceContext choiceContext, CardPlay cardPlay)
     {
         ProtocolPower.Of(this)?.AddProtocol((int)DynamicVars["Protocol"].BaseValue);
-        await PowerCmd.Apply<PendingDrawPower>(choiceContext, Owner.Creature, 1m,
-            Owner.Creature, this);
+        // 下回合协议结算后（AfterPlayerTurnStartLate），按该回合实际消耗总量的一半返还。
+        await PowerCmd.Apply<ProtocolRefundPower>(choiceContext, Owner.Creature, 1m, Owner.Creature, this);
     }
 
     protected override void OnUpgrade()

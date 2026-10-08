@@ -10,14 +10,11 @@ using MyCharMod.Mechanics;
 namespace MyCharMod;
 
 /// <summary>
-/// 普通响应技能：自续的协议来源。响应时吃池里的传参（含自己上一轮留下的「获得协议」），
-/// 打出后把自己的传参重新入池，池永远非空。
+/// 罕见技能「协议发掘」：获得协议，并把「获得协议」写进传参池，供响应牌消费（自身不响应）。
 /// </summary>
 [Pool(typeof(MyCharCardPool))]
 public sealed class ProtocolResponse : AlphaCard
 {
-    public override bool IsResponse => true;
-
     public override bool IsParamSource => true;
 
     public override bool GrantsProtocol => true;
@@ -31,7 +28,7 @@ public sealed class ProtocolResponse : AlphaCard
     public override string? CustomPortraitPath => MyCharAssets.Card("protocol_response");
 
     public override List<(string, string)>? Localization => new CardLoc(
-        "协议响应",
+        "协议发掘",
         "获得{Protocol:diff()}层[gold]协议[/gold]。\n[gold]传参[/gold]：获得{Param:diff()}层[gold]协议[/gold]。",
         ("flavor", "每一次应答，都在给下一次授权。"));
 
@@ -51,6 +48,7 @@ public sealed class ProtocolResponse : AlphaCard
 
     protected override void OnUpgrade()
     {
+        DynamicVars["Protocol"].UpgradeValueBy(1m);
         DynamicVars["Param"].UpgradeValueBy(1m);
     }
 }

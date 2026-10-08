@@ -32,11 +32,11 @@ public sealed class ProtocolExtract : AlphaCard
 
     public override List<(string, string)>? Localization => new CardLoc(
         "龙吼模块",
-        "获得{TempStrength:diff()}点[gold]临时力量[/gold]。随机造成{Damage:diff()}点伤害两次。\n消耗3层[gold]协议[/gold]：先给予全体敌人{Vulnerable:diff()}层[gold]易伤[/gold]。",
+        "获得{TempStrength:diff()}点[gold]临时力量[/gold]。随机造成{Damage:diff()}点伤害两次。\n消耗3层[gold]协议[/gold]：先给予全体敌人{Vulnerable:diff()}层[gold]易伤[/gold]一次。",
         ("flavor", "把授权直接榨成一声咆哮。"));
 
     public ProtocolExtract()
-        : base(1, CardType.Attack, CardRarity.Uncommon, TargetType.AnyEnemy)
+        : base(1, CardType.Attack, CardRarity.Uncommon, TargetType.RandomEnemy)
     {
     }
 
@@ -54,7 +54,7 @@ public sealed class ProtocolExtract : AlphaCard
         // 「先」给易伤：在伤害之前结算。协议不足 3 层时不消耗、不触发（避免白白掉层）。
         if (CurrentProtocol >= 3)
         {
-            ConsumeProtocol(3);
+            await ConsumeProtocol(choiceContext, 3);
             foreach (Creature enemy in combatState.HittableEnemies)
             {
                 await PowerCmd.Apply<VulnerablePower>(choiceContext, enemy,

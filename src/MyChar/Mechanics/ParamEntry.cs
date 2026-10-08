@@ -26,8 +26,14 @@ public enum ParamKind
     /// <summary>响应牌结算时获得 N 层协议。</summary>
     GainProtocol,
 
+    /// <summary>响应牌结算时对所有敌人造成 N 点伤害（群伤传参）。</summary>
+    DamageAll,
+
     /// <summary>给这张牌本次结算的攻击目标叠负面状态。种类见 <see cref="ParamEntry.Variant"/>，层数 = Value。</summary>
     Debuff,
+
+    /// <summary>给**全体敌人**叠负面状态（不跟随响应牌目标，规避自伤）。种类见 <see cref="ParamEntry.Variant"/>，层数 = Value。</summary>
+    DebuffAll,
 
     /// <summary>给这张牌永久加上一个关键词。关键词 = <c>(CardKeyword)entry.Variant</c>。</summary>
     Keyword,
@@ -38,8 +44,20 @@ public enum ParamKind
     /// <summary>给手牌中**所有**牌加上一个关键词。关键词 = <c>(CardKeyword)entry.Variant</c>。</summary>
     KeywordAllHand,
 
-    /// <summary>从 3 张本职业随机牌中选 1 张加入手牌。</summary>
+    /// <summary>从 3 张本职业随机稀有牌中选 1 张加入手牌。</summary>
     ChooseClassCard,
+
+    /// <summary>响应牌结算时获得 N 金币。</summary>
+    Gold,
+
+    /// <summary>响应牌结算时获得 N 点格挡（「格挡置换」把去除的敌人格挡写进传参）。</summary>
+    GainBlock,
+
+    /// <summary>响应牌结算时，选择任意张手牌直接消耗（「冗余清理」；可不选、可多选）。</summary>
+    ExhaustHand,
+
+    /// <summary>从 3 张本职业稀有牌中选 1 张，免费打出并消耗（「特别参数」药水写入的传参）。</summary>
+    FreePlayRareCard,
 }
 
 /// <summary>传参可以施加的负面状态，存在 <see cref="ParamEntry.Variant"/> 里。</summary>
@@ -57,6 +75,8 @@ public enum GenCardKind
     ProtocolAlpha,
     ProtocolBeta,
     ProtocolGamma,
+
+    /// <summary>加入 N 张**响应牌本身**的复制（「镜像构建」；N = Value）。</summary>
     CopyThisCard,
 
     /// <summary>生成 N 张「小刀」（本体 Shiv，0 费消耗攻击）。Value = 张数。</summary>
@@ -95,15 +115,22 @@ public sealed class ParamEntry
         ParamKind.DamageBoost => $"响应牌伤害+{Value * 100m:0}%",
         ParamKind.DamageAdd => $"响应牌伤害+{Value:0}",
         ParamKind.GainProtocol => $"获得{Value:0}层协议",
+        ParamKind.DamageAll => $"响应牌对所有敌人造成{Value:0}点伤害",
         ParamKind.Debuff => $"施加{DebuffName((DebuffKind)Variant)}{Value:0}层",
+        ParamKind.DebuffAll => $"给全体敌人{Value:0}层{DebuffName((DebuffKind)Variant)}一次",
         ParamKind.Keyword => $"本牌获得「{KeywordName((CardKeyword)Variant)}」",
         ParamKind.KeywordAllHand => $"手牌全部获得「{KeywordName((CardKeyword)Variant)}」",
-        ParamKind.ChooseClassCard => "从3张本职业牌中选1张加入手牌",
+        ParamKind.ChooseClassCard => "从3张本职业稀有牌中选1张加入手牌",
+        ParamKind.Gold => $"获得{Value:0}金币",
+        ParamKind.GainBlock => $"获得{Value:0}点格挡",
+        ParamKind.ExhaustHand => "选择任意张手牌消耗",
+        ParamKind.FreePlayRareCard => "从3张本职业稀有牌中选1张免费打出并消耗",
         ParamKind.GenerateCard => Variant switch
         {
             (int)GenCardKind.Shiv => $"加入{Value:0}张小刀",
             (int)GenCardKind.EnchantedShiv => $"加入{Value:0}张附魔小刀",
             (int)GenCardKind.ColorlessRandom => $"加入{Value:0}张随机无色牌",
+            (int)GenCardKind.CopyThisCard => $"加入{Value:0}张响应牌的复制",
             _ => $"生成「{GenCardName((GenCardKind)Variant)}」",
         },
         _ => Kind.ToString(),
@@ -134,7 +161,7 @@ public sealed class ParamEntry
         GenCardKind.ProtocolAlpha => "α协议",
         GenCardKind.ProtocolBeta => "β协议",
         GenCardKind.ProtocolGamma => "γ协议",
-        GenCardKind.CopyThisCard => "本牌的复制",
+        GenCardKind.CopyThisCard => "响应牌的复制",
         GenCardKind.Shiv => "小刀",
         GenCardKind.EnchantedShiv => "附魔小刀",
         GenCardKind.ColorlessRandom => "随机无色牌",

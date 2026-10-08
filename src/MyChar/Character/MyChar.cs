@@ -33,6 +33,12 @@ public sealed class MyChar : PlaceholderCharacterModel
     /// <summary>上面那张头像的白色剪影，顶部栏用它上色描边。</summary>
     public override string? CustomIconOutlineTexturePath => MyCharAssets.CharacterHudOutline;
 
+    /// <summary>地图上的角色标记，复用角色头像。</summary>
+    public override string? CustomMapMarkerPath => MyCharAssets.CharacterHud;
+
+    /// <summary>地图画笔颜色，与卡框颜色保持一致。</summary>
+    public override Color MapDrawingColor => new("c4d8f6");
+
     public override Color NameColor => new("D62000");
 
     public override CharacterGender Gender => CharacterGender.Neutral;
@@ -83,23 +89,23 @@ public sealed class MyChar : PlaceholderCharacterModel
     /// localization/<lang>/characters.json（见 docs/03-本地化约定.md）。
     /// </summary>
     public override List<(string, string)>? Localization => new CharacterLoc(
-        Title: "阿尔法机",
-        TitleObject: "阿尔法机",
-        Description: "一台以「传参」自我改写的机械。每一次响应都消费掉积累的参数，\n每一次迭代都把自己往更强处重写一行。",
-        PronounObject: "它",
-        PronounSubject: "它",
-        PronounPossessive: "它的",
-        PossessiveAdjective: "它的",
+        Title: "阿尔法",
+        TitleObject: "阿尔法",
+        Description: "一位再启动的人形，想要重新与世界建立链接。\n她将使用自己的训练方式，再次跟上时代。",
+        PronounObject: "她",
+        PronounSubject: "她",
+        PronounPossessive: "她的",
+        PossessiveAdjective: "她的",
         AromaPrinciple: "[sine][purple]参数到位，响应即至。[/purple][/sine]",
         EndTurnPingAlive: "[sine]继续迭代。[/sine]",
         EndTurnPingDead: "……",
         EventDeathPrevention: "核心尚未停机。",
         GoldMonologue: "[sine]还需要更多参数。[/sine]",
-        CardsModifierTitle: "阿尔法机卡牌",
-        CardsModifierDescription: "奖励与商店中会出现阿尔法机卡牌。",
+        CardsModifierTitle: "阿尔法卡牌",
+        CardsModifierDescription: "奖励与商店中会出现阿尔法卡牌。",
         ExtraLoc: new[]
         {
-            ("unlockText", "阿尔法机已可供选择。"),
+            ("unlockText", "阿尔法已可供选择。"),
             ("bestiaryQuote", "参数到位，响应即至。"),
         });
 }

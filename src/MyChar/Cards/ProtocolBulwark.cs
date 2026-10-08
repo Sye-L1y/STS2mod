@@ -40,7 +40,8 @@ public sealed class ProtocolBulwark : AlphaCard
     {
         await PowerCmd.Apply<NoAttackPower>(choiceContext, Owner.Creature, 1m, Owner.Creature, this);
 
-        int layers = ProtocolPower.Of(this)?.ConsumeProtocol() ?? 0;
+        ProtocolPower? protocol = ProtocolPower.Of(this);
+        int layers = protocol == null ? 0 : await protocol.ConsumeAllWithBroadcast(choiceContext);
         decimal block = ResolveValue("Block") + layers * ResolveValue("PerLayer");
         await CreatureCmd.GainBlock(Owner.Creature, block, ValueProp.Move, cardPlay);
     }

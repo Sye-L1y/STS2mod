@@ -12,7 +12,8 @@ using MyCharMod.Mechanics;
 namespace MyCharMod;
 
 /// <summary>
-/// 稀有攻击「歼灭龙息」：消耗全部协议，每层对随机敌人造成 7（9）伤。
+/// 稀有攻击「歼灭龙息」：消耗全部协议，每层对随机敌人造成 7（10）伤；
+/// 若消耗了 5 层以上，则回补 5 层协议。
 /// 0 层时无伤害，但仍可打出（不加门禁）。
 /// </summary>
 [Pool(typeof(MyCharCardPool))]
@@ -27,7 +28,7 @@ public sealed class ProtocolSettlement : AlphaCard
 
     public override List<(string, string)>? Localization => new CardLoc(
         "歼灭龙息",
-        "消耗全部[gold]协议[/gold]：每层对随机敌人造成{PerLayer:diff()}点伤害。",
+        "消耗全部[gold]协议[/gold]：每层对随机敌人造成{PerLayer:diff()}点伤害。若消耗了5层以上，则获得5层[gold]协议[/gold]。",
         ("flavor", "把攒下的授权一次性清账。"));
 
     public ProtocolSettlement()
@@ -43,10 +44,17 @@ public sealed class ProtocolSettlement : AlphaCard
             return;
         }
 
-        int layers = ProtocolPower.Of(this)?.ConsumeProtocol() ?? 0;
+        ProtocolPower? protocol = ProtocolPower.Of(this);
+        int layers = protocol == null ? 0 : await protocol.ConsumeAllWithBroadcast(choiceContext);
         if (layers <= 0)
         {
             return;
+        }
+
+        // 表 §4：消耗了 5 层以上，则协议 5（回补 5 层）。
+        if (layers >= 5)
+        {
+            ProtocolPower.Of(this)?.AddProtocol(5);
         }
 
         await DamageCmd.Attack(ResolveValue("PerLayer"))
@@ -59,6 +67,6 @@ public sealed class ProtocolSettlement : AlphaCard
 
     protected override void OnUpgrade()
     {
-        DynamicVars["PerLayer"].UpgradeValueBy(2m);
+        DynamicVars["PerLayer"].UpgradeValueBy(3m);
     }
 }

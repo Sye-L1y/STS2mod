@@ -13,7 +13,7 @@ using MyCharMod.Mechanics;
 namespace MyCharMod;
 
 /// <summary>
-/// 普通运转技能：一次抽一大把，只留下带机制联动的牌，其余统一丢掉。
+/// 罕见运转技能：一次抽一大把，只留下带机制联动的牌，其余统一丢掉。
 /// 先抽满再统一弃，所以抽到的牌会短暂地在手里出现一下。
 /// </summary>
 [Pool(typeof(MyCharCardPool))]
@@ -32,7 +32,7 @@ public sealed class DisparityCount : AlphaCard
         ("flavor", "把没用的数据直接筛掉。"));
 
     public DisparityCount()
-        : base(0, CardType.Skill, CardRarity.Common, TargetType.Self)
+        : base(0, CardType.Skill, CardRarity.Uncommon, TargetType.Self)
     {
     }
 

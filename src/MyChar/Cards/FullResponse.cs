@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using BaseLib.Abstracts;
 using BaseLib.Utils;
+using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.GameActions.Multiplayer;
@@ -33,20 +34,20 @@ public sealed class FullResponse : AlphaCard
 
     public override List<(string, string)>? Localization => new CardLoc(
         "完全响应",
-        "造成{Damage:diff()}点伤害，获得{Block:diff()}点[gold]格挡[/gold]。\n本场战斗中，本牌吃到的[gold]传参[/gold]会保留在本牌上。{Retained}",
+        "对所有敌人造成{Damage:diff()}点伤害，获得{Block:diff()}点[gold]格挡[/gold]。\n本场战斗中，本牌吃到的[gold]传参[/gold]会保留在本牌上。{Retained}",
         ("flavor", "不只是一次应答——它把答案记了下来。"));
 
     public FullResponse()
-        : base(0, CardType.Attack, CardRarity.Rare, TargetType.AnyEnemy)
+        : base(0, CardType.Attack, CardRarity.Rare, TargetType.AllEnemies)
     {
     }
 
     protected override async Task PlayEffect(PlayerChoiceContext choiceContext, CardPlay cardPlay)
     {
-        ArgumentNullException.ThrowIfNull(cardPlay.Target, "cardPlay.Target");
+        ICombatState? combatState = CombatState ?? Owner.Creature.CombatState;
         await DamageCmd.Attack(RawDamage())
             .FromCard(this, cardPlay)
-            .Targeting(cardPlay.Target)
+            .TargetingAllOpponents(combatState!)
             .WithHitFx("vfx/vfx_attack_slash")
             .Execute(choiceContext);
         await CreatureCmd.GainBlock(Owner.Creature, RawBlock(), ValueProp.Move, cardPlay);
@@ -56,5 +57,7 @@ public sealed class FullResponse : AlphaCard
     {
         DynamicVars.Damage.UpgradeValueBy(1m);
         DynamicVars.Block.UpgradeValueBy(1m);
+        // 保留走 AddKeyword：BaseKeywords 依赖 IsUpgraded 时，LocalKeywords 会在升级前就被缓存，升级后不刷新。
+        AddKeyword(CardKeyword.Retain);
     }
 }

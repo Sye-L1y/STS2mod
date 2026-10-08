@@ -17,14 +17,17 @@ public sealed class MyCharTokenCardPool : CustomCardPoolModel
     /// <summary>卡图/图集路径里会用到的池子名，只能用 [a-z0-9_]。</summary>
     public override string Title => "my_char_token";
 
-    /// <summary>沿用铁甲战士的能量图标（与角色主池一致）。</summary>
-    public override string EnergyColorName => "ironclad";
+    // 与角色主池一致：走 BaseLib 带分隔符的 EnergyColorName，用同一套自定义能量图标。
+
+    public override string? BigEnergyIconPath => MyCharAssets.EnergyBig;
+
+    public override string? TextEnergyIconPath => MyCharAssets.EnergyText;
 
     public override Color DeckEntryCardColor => new("D62000");
 
     public override Color EnergyOutlineColor => new("802020");
 
-    public override Color ShaderColor => new("D62000");
+    public override Color ShaderColor => new("c4d8f6");
 
     public override bool IsColorless => false;
 

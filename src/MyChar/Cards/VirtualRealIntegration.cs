@@ -13,7 +13,7 @@ using MyCharMod.Mechanics;
 namespace MyCharMod;
 
 /// <summary>
-/// 稀有技能「虚实结合」：消耗；失去 10 点生命，获得 1 层[gold]无实体[/gold]（升级后失血降为 7，并获得[gold]保留[/gold]）；
+/// 稀有技能「虚实结合」：消耗；失去 9 点生命，获得 1 层[gold]无实体[/gold]（升级后失血降为 6，并获得[gold]保留[/gold]）；
 /// [gold]传参[/gold]：给所有手牌添加[gold]虚无[/gold]。
 /// </summary>
 [Pool(typeof(MyCharCardPool))]
@@ -26,7 +26,7 @@ public sealed class VirtualRealIntegration : AlphaCard
 
     protected override IEnumerable<DynamicVar> CanonicalVars => new DynamicVar[]
     {
-        new HpLossVar(10m),
+        new HpLossVar(9m),
         new DynamicVar("Intangible", 1m),
     };
 

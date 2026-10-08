@@ -12,11 +12,19 @@ using MyCharMod.Mechanics;
 
 namespace MyCharMod;
 
-/// <summary>普通迭代攻击：每打出 2 次（完成一次迭代），获得 1 点能量。</summary>
+/// <summary>
+/// 普通迭代攻击：每打出 2 次（完成一次迭代），本牌永久获得「每次打出 +1 能量」。
+/// 「获得型」迭代按层数叠加：达到档位后，每次打出按当前层数给能量（层数不含本次，打出后计数才 +1）。
+/// </summary>
 [Pool(typeof(MyCharCardPool))]
 public sealed class StepLoad : AlphaCard
 {
     public override int IterationEvery => 2;
+
+    /// <summary>获得型：达到档位后，每次打出按当前层数给能量（层数 2 = 2 点）。</summary>
+    public override IterationEffectKind IterationEffectKind => IterationEffectKind.Gain;
+
+    public override IterationEffectSpec? IterationEffectSpec => new("打出后获得", 1m, "点[gold]能量[/gold]");
 
     protected override IEnumerable<DynamicVar> CanonicalVars => new DynamicVar[]
     {
@@ -27,7 +35,7 @@ public sealed class StepLoad : AlphaCard
 
     public override List<(string, string)>? Localization => new CardLoc(
         "逐步加载",
-        "造成{Damage:diff()}点伤害。\n[gold]迭代2[/gold]（已打出{IterCount}次）：获得1点[gold]能量[/gold]。",
+        "造成{Damage:diff()}点伤害。\n[gold]迭代[/gold]2（已打出{IterCount}次）：{IterEffect}。",
         ("flavor", "一次加载一段，越打越重。"));
 
     public StepLoad()
@@ -43,11 +51,12 @@ public sealed class StepLoad : AlphaCard
             .Targeting(cardPlay.Target)
             .WithHitFx("vfx/vfx_attack_slash")
             .Execute(choiceContext);
-    }
 
-    protected override async Task OnIterationCompleted(PlayerChoiceContext choiceContext)
-    {
-        await PlayerCmd.GainEnergy(1m, Owner);
+        // 达到档位后每次打出按层数给能量；计数在本次打出后 +1，所以这里用打出前的层数。
+        if (IterationStacks > 0)
+        {
+            await PlayerCmd.GainEnergy(IterationStacks, Owner);
+        }
     }
 
     protected override void OnUpgrade()

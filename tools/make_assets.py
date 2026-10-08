@@ -7,6 +7,8 @@
     顶部栏角色图标  128 x 128   （Modder's Manual 写的 88x88 是错的）
     遗物图标        256 x 256
     战斗立绘        512 x 512   （BaseLib 走 .tscn 场景，暂为备用图）
+    卡面能量图标    74 x 74     （本体 energy_ironclad.tres 的 atlas region）
+    内联能量图标    24 x 24     （本体 sprite_fonts/*_energy_icon.png）
 
 用法： python tools/make_assets.py
 """
@@ -24,19 +26,29 @@ OUT = ROOT / "src" / "MyChar" / "assets" / "images"
 
 CARD = (500, 380)
 
-# (源文件, 目标路径, 宽, 高, 是否抠背景)
+# (源文件, 目标路径, 宽, 高, 处理方式)
+#   crop  = 居中裁剪到目标比例后缩放（源图有实底背景）
+#   cut   = 四角采样抠背景 + 居中留白（源图是纯色背景的单个物件）
+#   alpha = 源图自带透明通道，只做等比缩放 + 居中留白，不抠背景
 JOBS = [
-    ("char_portrait.jpg", "char/portrait.png", 256, 256, False),
-    ("char_portrait.jpg", "char/select.png", 132, 195, False),
-    ("char_portrait.jpg", "char/hud.png", 128, 128, False),
-    ("char_portrait.jpg", "char/combat.png", 512, 512, False),
-    ("card_strike.jpg", "cards/strike.png", *CARD, False),
-    ("card_defend.jpg", "cards/defend.png", *CARD, False),
-    ("card_blast.jpg", "cards/blast.png", *CARD, False),
-    ("card_ward.jpg", "cards/ward.png", *CARD, False),
-    ("card_signature.jpg", "cards/signature.png", *CARD, False),
-    ("relic_ember_heart.jpg", "relics/ember_heart.png", 256, 256, True),
-    ("relic_old_anchor.jpg", "relics/old_anchor.png", 256, 256, True),
+    ("char_portrait.jpg", "char/portrait.png", 256, 256, "crop"),
+    ("char_portrait.jpg", "char/combat.png", 512, 512, "crop"),
+    ("char_select.png", "char/select.png", 132, 195, "crop"),
+    ("char_hud.png", "char/hud.png", 128, 128, "alpha"),
+    ("energy_icon.png", "ui/energy_big.png", 74, 74, "alpha"),
+    ("energy_icon.png", "ui/energy_text.png", 24, 24, "alpha"),
+    ("card_strike.jpg", "cards/strike.png", *CARD, "crop"),
+    ("card_defend.jpg", "cards/defend.png", *CARD, "crop"),
+    ("card_blast.jpg", "cards/blast.png", *CARD, "crop"),
+    ("card_ward.jpg", "cards/ward.png", *CARD, "crop"),
+    ("card_signature.jpg", "cards/signature.png", *CARD, "crop"),
+    ("relic_ember_heart.jpg", "relics/ember_heart.png", 256, 256, "cut"),
+    ("relic_old_anchor.jpg", "relics/old_anchor.png", 256, 256, "cut"),
+    # 药水：源图自带透明通道，本体大图 256x256；局内槽位按 keep-aspect 缩到 60x60，
+    # 所以一张 256x256 同时当 packed 与 large 用。
+    ("potion_temp_protocol.png", "potions/temp_protocol.png", 256, 256, "alpha"),
+    ("potion_exp_record.png", "potions/exp_record.png", 256, 256, "alpha"),
+    ("potion_special_param.png", "potions/special_param.png", 256, 256, "alpha"),
 ]
 
 
@@ -127,13 +139,15 @@ def main() -> int:
     cache: dict[str, Image.Image] = {}
     made: dict[str, Image.Image] = {}
 
-    for src, dst, w, h, cut in JOBS:
+    for src, dst, w, h, mode in JOBS:
         if src not in cache:
             cache[src] = Image.open(RAW / src).convert("RGBA")
 
         img = cache[src]
-        if cut:
+        if mode == "cut":
             img = fit_square(cut_background(img), max(w, h))
+        elif mode == "alpha":
+            img = fit_square(img, max(w, h))
         else:
             img = center_crop(img, w / h).resize((w, h), Image.Resampling.LANCZOS)
 

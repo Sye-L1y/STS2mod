@@ -10,6 +10,7 @@ using MegaCrit.Sts2.Core.Entities.Powers;
 using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Localization;
 using MegaCrit.Sts2.Core.Models;
+using MegaCrit.Sts2.Core.Nodes.Cards;
 
 namespace MyCharMod.Mechanics;
 
@@ -50,6 +51,9 @@ public sealed class AlphaCorePower : CustomPowerModel, IAddDumbVariablesToPowerD
         /// <summary>本场战斗内每张牌已打出的次数。迭代层数 = 次数 ÷ 迭代间隔 X。</summary>
         public readonly Dictionary<CardModel, int> Plays = new();
 
+        /// <summary>每张牌「已经结算过」的迭代完成档数，用来补结算外部推进的计数（见 AdvanceIteration）。</summary>
+        public readonly Dictionary<CardModel, int> FiredIterations = new();
+
         /// <summary>完全响应：已经挂在这张牌上、之后每次打出都重放的传参。</summary>
         public readonly Dictionary<CardModel, List<ParamEntry>> Retained = new();
 
@@ -81,8 +85,11 @@ public sealed class AlphaCorePower : CustomPowerModel, IAddDumbVariablesToPowerD
         /// <summary>「共演」本回合是否打出过迭代牌。</summary>
         public bool IterationPlayedThisTurn;
 
-        /// <summary>「欧米伽协议」本场战斗是否已触发过 α/β/γ。</summary>
+        /// <summary>「欧米伽协议」本场战斗已触发过（集齐 α/β/γ）后的伤害。</summary>
         public bool OmegaTriggered;
+
+        /// <summary>「欧米伽协议」本场战斗已打出过的协议种类（"alpha"/"beta"/"gamma"），集齐三种才触发。</summary>
+        public readonly HashSet<string> PlayedProtocols = new();
     }
 
     protected override object? InitInternalData() => new Data();
@@ -104,7 +111,14 @@ public sealed class AlphaCorePower : CustomPowerModel, IAddDumbVariablesToPowerD
         {
             return "（空）";
         }
-        return string.Join("\n", Core.Params.Select((entry, i) => $"{i + 1}. {entry.Describe()}"));
+        // 同类（种类 / 数值 / 子类型都相同）合并成「描述 ×N」，减少状态栏行数。
+        // 仅影响显示：池中条目与触发顺序完全不变，每条仍独立结算。
+        IEnumerable<string> lines = Core.Params
+            .GroupBy(entry => (entry.Kind, entry.Value, entry.Variant))
+            .Select(group => group.Count() == 1
+                ? group.First().Describe()
+                : $"{group.First().Describe()} ×{group.Count()}");
+        return string.Join("\n", lines);
     }
 
     // ————————————————— 传参池 —————————————————
@@ -184,6 +198,19 @@ public sealed class AlphaCorePower : CustomPowerModel, IAddDumbVariablesToPowerD
         InvokeDisplayAmountChanged();
     }
 
+    /// <summary>
+    /// 入池并广播「传参入池」事件（E18，供「终响激发」监听）。
+    /// 所有入池入口都应走这里，否则监听者会漏触发。
+    /// </summary>
+    public async Task AddParamWithHook(PlayerChoiceContext choiceContext, ParamEntry entry)
+    {
+        AddParam(entry);
+        if (Owner.Player is { } player)
+        {
+            await AlphaHooks.ParamAdded(choiceContext, player, entry);
+        }
+    }
+
     /// <summary>取走并清空池中全部传参。</summary>
     public List<ParamEntry> ConsumeParams()
     {
@@ -231,6 +258,43 @@ public sealed class AlphaCorePower : CustomPowerModel, IAddDumbVariablesToPowerD
             return;
         }
         Core.Plays[card] = Math.Max(0, GetPlayCount(card) + amount);
+    }
+
+    /// <summary>这张牌已经结算过的迭代完成档数。</summary>
+    public int GetFiredStacks(CardModel card) =>
+        Core.FiredIterations.TryGetValue(card, out int n) ? n : 0;
+
+    /// <summary>记下这张牌已经结算到第几档迭代完成。</summary>
+    public void SetFiredStacks(CardModel card, int value) => Core.FiredIterations[card] = value;
+
+    /// <summary>
+    /// 推进某张牌的迭代计数，并**立刻补结算**它跨过的每一档迭代完成。
+    /// 供「加速编译 / 快速迭代 / 共演」等外部改计数的牌与能力调用——
+    /// 否则这些牌跨过的档位不会被结算，表现为迭代效果时有时无。
+    /// </summary>
+    public async Task AdvanceIteration(PlayerChoiceContext choiceContext, CardModel card, int amount)
+    {
+        AddPlayCount(card, amount);
+        if (card is AlphaCard alpha)
+        {
+            await alpha.FirePendingIterations(choiceContext);
+        }
+        RefreshCardFace(card);
+    }
+
+    /// <summary>
+    /// 计数变化后刷新卡面。手牌里的牌节点会一直挂着，不会自己重算 <c>{IterCount}</c>，
+    /// 不刷新就会出现「抽牌堆里的牌（重新抽到时重算）已 +1，手牌里那张还停在旧数字」。
+    /// 抽牌堆 / 弃牌堆 / 消耗堆没有常驻节点（<see cref="NCard.FindOnTable"/> 对它们返回 null），
+    /// 它们的卡面在打开牌堆界面时按当前计数重算，无需处理。
+    /// </summary>
+    private static void RefreshCardFace(CardModel card)
+    {
+        if (card.Pile is not { } pile)
+        {
+            return;
+        }
+        NCard.FindOnTable(card)?.UpdateVisuals(pile.Type, CardPreviewMode.Normal);
     }
 
     // ————————————————— 完全响应：把传参挂到牌上 —————————————————

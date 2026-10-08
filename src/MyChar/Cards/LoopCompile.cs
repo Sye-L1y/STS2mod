@@ -12,13 +12,15 @@ using MyCharMod.Mechanics;
 
 namespace MyCharMod;
 
-/// <summary>罕见运转技能：把弃牌堆里的迭代牌整批调回抽牌堆顶，下回合集中上手。</summary>
+/// <summary>罕见运转技能：消耗；把弃牌堆里的迭代牌整批调回抽牌堆顶，然后抽 2（3）张。</summary>
 [Pool(typeof(MyCharCardPool))]
 public sealed class LoopCompile : AlphaCard
 {
+    protected override IEnumerable<CardKeyword> BaseKeywords => new[] { CardKeyword.Exhaust };
+
     protected override IEnumerable<DynamicVar> CanonicalVars => new DynamicVar[]
     {
-        new DynamicVar("Draw", 1m),
+        new DynamicVar("Draw", 2m),
     };
 
     public override string? CustomPortraitPath => MyCharAssets.Card("loop_compile");

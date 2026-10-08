@@ -20,7 +20,7 @@ public sealed class ProtocolActivation : AlphaCard
 
     protected override IEnumerable<DynamicVar> CanonicalVars => new DynamicVar[]
     {
-        new DynamicVar("Protocol", 3m),
+        new DynamicVar("Protocol", 4m),
     };
 
     public override string? CustomPortraitPath => MyCharAssets.Card("protocol_activation");

@@ -57,17 +57,17 @@ public sealed class MyCharRelicEnsemble : CustomRelicModel
         return Task.CompletedTask;
     }
 
-    public override Task BeforeSideTurnEnd(PlayerChoiceContext choiceContext, CombatSide side,
+    public override async Task BeforeSideTurnEnd(PlayerChoiceContext choiceContext, CombatSide side,
         IEnumerable<Creature> participants)
     {
         AlphaCorePower? core = AlphaCorePower.Of(Owner);
         if (core == null || !core.Core.IterationPlayedThisTurn)
         {
-            return Task.CompletedTask;
+            return;
         }
         if (!participants.Contains(Owner.Creature))
         {
-            return Task.CompletedTask;
+            return;
         }
 
         bool any = false;
@@ -75,7 +75,7 @@ public sealed class MyCharRelicEnsemble : CustomRelicModel
         {
             if (card is AlphaCard { IterationEvery: > 0 })
             {
-                core.AddPlayCount(card, 1);
+                await core.AdvanceIteration(choiceContext, card, 1);
                 any = true;
             }
         }
@@ -83,6 +83,5 @@ public sealed class MyCharRelicEnsemble : CustomRelicModel
         {
             Flash();
         }
-        return Task.CompletedTask;
     }
 }

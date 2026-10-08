@@ -52,7 +52,7 @@ public sealed class AlphaAnchor : AlphaCard
 
     public override List<(string, string)>? Localization => new CardLoc(
         "阿尔法锚点",
-        "对所有敌人造成{Damage:diff()}点伤害{Hits}次。\n[gold]迭代1[/gold]：每打出一次，本局游戏内本牌伤害次数+1（跨战斗）。",
+        "对所有敌人造成{Damage:diff()}点伤害{Hits}次。\n[gold]迭代1[/gold]：每打出一次，本局游戏内本牌伤害次数+1。",
         ("flavor", "钉在时间线上的锚，越用越沉。"));
 
     public AlphaAnchor()

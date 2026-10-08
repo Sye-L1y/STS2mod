@@ -18,3 +18,7 @@ ref/
 *.suo
 Thumbs.db
 desktop.ini
+
+# ---- Python ----
+__pycache__/
+*.pyc

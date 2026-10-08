@@ -29,6 +29,16 @@ public static class MyCharAssets
     // —— 遗物图标 ——
     public static string Relic(string name) => Image($"relics/{name}.png");
 
+    // —— 药水图标 ——
+    public static string Potion(string name) => Image($"potions/{name}.png");
+
     // —— 能力（状态栏）图标：本体 power_atlas 的图元是 64x64 ——
     public static string Power(string name) => Image($"powers/{name}.png");
+
+    // —— 能量图标 ——
+    /// <summary>卡面费用 / 大图标，本体 74x74。</summary>
+    public static string EnergyBig => Image("ui/energy_big.png");
+
+    /// <summary>描述内联 [E] 图标，本体 24x24。</summary>
+    public static string EnergyText => Image("ui/energy_text.png");
 }

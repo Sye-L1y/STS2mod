@@ -25,7 +25,7 @@ public sealed class PointExecution : AlphaCard
     protected override IEnumerable<DynamicVar> CanonicalVars => new DynamicVar[]
     {
         new AlphaDamageVar(9m, ValueProp.Move),
-        new DamageVar("Bonus", 4m, ValueProp.Move),
+        new DamageVar("Bonus", 6m, ValueProp.Move),
     };
 
     public override string? CustomPortraitPath => MyCharAssets.Card("point_execution");
@@ -69,6 +69,6 @@ public sealed class PointExecution : AlphaCard
 
     protected override void OnUpgrade()
     {
-        DynamicVars.Damage.UpgradeValueBy(3m);
+        DynamicVars["Bonus"].UpgradeValueBy(3m);
     }
 }

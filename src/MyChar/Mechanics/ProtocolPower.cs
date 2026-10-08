@@ -1,12 +1,14 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using BaseLib.Abstracts;
+using BaseLib.Patches.Localization;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Entities.Powers;
 using MegaCrit.Sts2.Core.GameActions.Multiplayer;
+using MegaCrit.Sts2.Core.Localization;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Models.Powers;
 
@@ -19,7 +21,7 @@ namespace MyCharMod.Mechanics;
 /// 层数放在 <see cref="PowerModel.GetInternalData{T}"/> 里，不走 Amount——因为 Amount 掉到 0
 /// 时引擎会把 Power 整个移除，那样状态栏上的图标就会消失。
 /// </summary>
-public sealed class ProtocolPower : CustomPowerModel
+public sealed class ProtocolPower : CustomPowerModel, IAddDumbVariablesToPowerDescription
 {
     public override PowerType Type => PowerType.Buff;
 
@@ -36,16 +38,25 @@ public sealed class ProtocolPower : CustomPowerModel
     public override List<(string, string)>? Localization => new()
     {
         ("title", "协议"),
-        // 状态栏数字已显示当前层数，tooltip 不复述 α/β/γ 档位表（各档协议牌自带卡面说明）。
-        ("description", "回合开始时消耗全部层数，按档位将一张协议牌加入手牌。"),
+        // 状态栏数字显示当前层数；这里再补一句「当前层数 → 结算生成哪张协议牌」，方便实时对照档位。
+        ("description", "当前{Layers}层，结算时生成{Tier}。回合开始时消耗全部层数，按档位将一张协议牌加入手牌（1-4→α协议，5-12→β协议，13+→γ协议，超出部分转活力）。"),
     };
 
-    /// <summary>档位上限：1-4 → α，5-10 → β，11 → γ，超过 γ 的部分转活力。</summary>
-    private const int GammaTier = 11;
+    /// <summary>β 档上限：1-4 → α，5-12 → β。</summary>
+    private const int BetaMax = 12;
+
+    /// <summary>γ 档下限：13+ → γ；超出 13 层的部分结算时转等量活力。</summary>
+    private const int GammaTier = 13;
 
     private sealed class Data
     {
         public int Layers;
+
+        /// <summary>最近一次结算消耗掉的层数（供「备用协议」按消耗量的一半返还）。</summary>
+        public int LastConsumed;
+
+        /// <summary>本场战斗**累计获得过**的协议层数（含「协议共振」追加的部分，供「协议矩阵」里程碑读取）。</summary>
+        public int TotalGained;
     }
 
     protected override object? InitInternalData() => new Data();
@@ -55,8 +66,32 @@ public sealed class ProtocolPower : CustomPowerModel
     /// <summary>当前层数。</summary>
     public int Layers => Core.Layers;
 
+    /// <summary>最近一次结算消耗掉的层数。</summary>
+    public int LastConsumed => Core.LastConsumed;
+
+    /// <summary>本场战斗累计获得过的协议层数（含「协议共振」追加部分）。</summary>
+    public int TotalGained => Core.TotalGained;
+
     /// <summary>状态栏上的数字。</summary>
     public override int DisplayAmount => Core.Layers;
+
+    /// <summary>状态栏描述里注入实时层数与当前档位对应的协议牌。</summary>
+    public void AddDumbVariablesToPowerDescription(LocString description)
+    {
+        // 层数存在内部数据里，只有可变实例（战斗中的那张）才初始化过；canonical 实例取 0 兜底。
+        int layers = IsMutable ? Core.Layers : 0;
+        description.Add("Layers", layers);
+        description.Add("Tier", TierName(layers));
+    }
+
+    /// <summary>当前层数结算时生成的协议牌档位文案。</summary>
+    private static string TierName(int layers) => layers switch
+    {
+        <= 0 => "无",
+        <= 4 => "[gold]α协议[/gold]",
+        <= BetaMax => "[gold]β协议[/gold]",
+        _ => "[gold]γ协议[/gold]",
+    };
 
     public void AddProtocol(int layers)
     {
@@ -67,6 +102,10 @@ public sealed class ProtocolPower : CustomPowerModel
         // 「协议共振」：正向获取时额外追加 Amount 层。只认正向获取，消耗/扣减路径不受影响。
         int bonus = layers > 0 ? Owner.GetPower<ProtocolResonancePower>()?.Amount ?? 0 : 0;
         Core.Layers += layers + bonus;
+        if (layers > 0)
+        {
+            Core.TotalGained += layers + bonus;
+        }
         InvokeDisplayAmountChanged();
     }
 
@@ -101,9 +140,33 @@ public sealed class ProtocolPower : CustomPowerModel
     public static ProtocolPower? Of(Player player) =>
         player.Creature?.GetPower<ProtocolPower>();
 
+    /// <summary>消耗全部层数并广播「协议消耗」事件（供协议消耗牌调用）。返回实际消耗层数。</summary>
+    public async Task<int> ConsumeAllWithBroadcast(PlayerChoiceContext choiceContext)
+    {
+        int layers = ConsumeProtocol();
+        await BroadcastConsumed(choiceContext, layers);
+        return layers;
+    }
+
+    /// <summary>消耗至多 <paramref name="max"/> 层并广播「协议消耗」事件（供协议消耗牌调用）。返回实际消耗层数。</summary>
+    public async Task<int> ConsumeLayersWithBroadcast(PlayerChoiceContext choiceContext, int max)
+    {
+        int layers = ConsumeLayers(max);
+        await BroadcastConsumed(choiceContext, layers);
+        return layers;
+    }
+
+    private async Task BroadcastConsumed(PlayerChoiceContext choiceContext, int layers)
+    {
+        if (layers > 0 && Owner.Player is { } player)
+        {
+            await AlphaHooks.ProtocolConsumed(choiceContext, player, layers);
+        }
+    }
+
     /// <summary>
     /// 回合开始时消费全部协议层数，按档位往手牌加入一张协议牌。
-    /// 0 / 1-4 / 5-10 / 11+ 对应 无 / α / β / γ。
+    /// 0 / 1-4 / 5-12 / 13+ 对应 无 / α / β / γ。
     /// </summary>
     public override async Task AfterPlayerTurnStart(PlayerChoiceContext choiceContext, Player player)
     {
@@ -122,10 +185,14 @@ public sealed class ProtocolPower : CustomPowerModel
     public async Task TriggerProtocol(PlayerChoiceContext choiceContext, Player player)
     {
         int layers = ConsumeProtocol();
+        Core.LastConsumed = layers;
         if (layers <= 0)
         {
             return;
         }
+
+        // 结算也属于「消耗协议」：广播给「厄难覆盖」等监听者。
+        await BroadcastConsumed(choiceContext, layers);
 
         // 溢出兜底：超过 γ 档的层数转成等量活力，攒过头也不算白攒（见 docs/08 P2）。
         if (layers > GammaTier)
@@ -146,10 +213,12 @@ public sealed class ProtocolPower : CustomPowerModel
         CardModel proto = layers switch
         {
             <= 4 => combatState.CreateCard<ProtocolAlpha>(player),
-            <= 10 => combatState.CreateCard<ProtocolBeta>(player),
+            <= BetaMax => combatState.CreateCard<ProtocolBeta>(player),
             _ => combatState.CreateCard<ProtocolGamma>(player),
         };
 
         await CardPileCmd.AddGeneratedCardToCombat(proto, PileType.Hand, player);
+        // 「协议矩阵」在场时，新生成的协议牌自动升级。
+        ProtocolMatrixPower.UpgradeNewProtocol(proto, player);
     }
 }

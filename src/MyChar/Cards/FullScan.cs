@@ -19,7 +19,7 @@ public sealed class FullScan : AlphaCard
     protected override IEnumerable<DynamicVar> CanonicalVars => new DynamicVar[]
     {
         new AlphaDamageVar(7m, ValueProp.Move),
-        new DynamicVar("Protocol", 2m),
+        new DynamicVar("Protocol", 3m),
     };
 
     public override string? CustomPortraitPath => MyCharAssets.Card("full_scan");
@@ -49,6 +49,6 @@ public sealed class FullScan : AlphaCard
 
     protected override void OnUpgrade()
     {
-        DynamicVars.Damage.UpgradeValueBy(3m);
+        DynamicVars["Protocol"].UpgradeValueBy(1m);
     }
 }

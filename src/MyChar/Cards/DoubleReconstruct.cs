@@ -15,30 +15,37 @@ namespace MyCharMod;
 
 /// <summary>
 /// 稀有攻击「双重验证」：造成 11（14）伤害；
-/// [gold]迭代2[/gold]：伤害 +8（11），且先给予一次一层易伤（叠加几次就分开施加几次）。
+/// [gold]迭代2[/gold]（升级后 1）：伤害 +9，且先给予一次一层易伤（叠加几次就分开施加几次）。
 /// </summary>
 [Pool(typeof(MyCharCardPool))]
 public sealed class DoubleReconstruct : AlphaCard
 {
-    public override int IterationEvery => 2;
+    public override int IterationEvery =>
+        DynamicVars.TryGetValue("IterEvery", out DynamicVar? every) ? (int)every.BaseValue : 2;
 
     public override IReadOnlyDictionary<string, decimal> IterationVarBonus =>
         new Dictionary<string, decimal>
         {
-            ["Damage"] = DynamicVars.TryGetValue("IterGain", out DynamicVar? gain) ? gain.BaseValue : 8m,
+            ["Damage"] = DynamicVars.TryGetValue("IterGain", out DynamicVar? gain) ? gain.BaseValue : 9m,
         };
+
+    /// <summary>次数型：每叠加一次，就「分开」多施加一次一层易伤（层数 2 = 两次）。</summary>
+    public override IterationEffectKind IterationEffectKind => IterationEffectKind.Count;
+
+    public override IterationEffectSpec? IterationEffectSpec => new("给予", 1m, "层[gold]易伤[/gold]");
 
     protected override IEnumerable<DynamicVar> CanonicalVars => new DynamicVar[]
     {
         new AlphaDamageVar(11m, ValueProp.Move),
-        new DynamicVar("IterGain", 8m),
+        new DynamicVar("IterGain", 9m),
+        new DynamicVar("IterEvery", 2m),
     };
 
     public override string? CustomPortraitPath => MyCharAssets.Card("double_reconstruct");
 
     public override List<(string, string)>? Localization => new CardLoc(
         "双重验证",
-        "造成{Damage:diff()}点伤害。\n[gold]迭代2[/gold]（已打出{IterCount}次）：伤害+{IterGain:diff()}，且先给予一次一层[gold]易伤[/gold]。",
+        "造成{Damage:diff()}点伤害。\n[gold]迭代[/gold]{IterEvery:inverseDiff()}（已打出{IterCount}次）：伤害+{IterGain:diff()}，且先{IterEffect}。",
         ("flavor", "每验证一次，结构就更硬一分。"));
 
     public DoubleReconstruct()
@@ -66,6 +73,6 @@ public sealed class DoubleReconstruct : AlphaCard
     protected override void OnUpgrade()
     {
         DynamicVars.Damage.UpgradeValueBy(3m);
-        DynamicVars["IterGain"].UpgradeValueBy(3m);
+        DynamicVars["IterEvery"].UpgradeValueBy(-1m);
     }
 }

@@ -85,6 +85,24 @@ JOBS = [
     ("virtual_real_integration", "虚实结合", SKILL),
     ("storage_reservation", "存储预留", SKILL),
     ("advance_future", "预支未来", SKILL),
+    # —— 批次 1（v1.6） ——
+    ("duospace_positioning", "复空间定位", SKILL),
+    ("group_echo", "群响", ATTACK),
+    ("more_the_merrier", "多多益善", ATTACK),
+    # —— 批次 2（v1.6） ——
+    ("weakness_param", "弱点参数", SKILL),
+    ("data_injection", "数据注入", ATTACK),
+    ("broadcast_command", "广播指令", SKILL),
+    ("infiltration", "渗透", POWER),
+    ("armor_forging", "甲胄铸造", POWER),
+    ("personality_training", "人格训练", POWER),
+    ("batch_compile", "批量编译", SKILL),
+    ("fast_iteration", "快速迭代", POWER),
+    ("concentrated_evolution", "聚神进化", SKILL),
+    ("accelerated_compile", "加速编译", SKILL),
+    ("high_energy_attachment", "高能附加", SKILL),
+    # —— 批次 C（v1.9） ——
+    ("stack_grudge", "叠仇", ATTACK),
 ]
 
 

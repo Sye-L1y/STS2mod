@@ -12,7 +12,7 @@ using MyCharMod.Mechanics;
 
 namespace MyCharMod;
 
-/// <summary>普通技能：读敌人意图再决定削弱方向——要打人就削它，不打人就趁它露破绽。</summary>
+/// <summary>罕见技能：读敌人意图再决定削弱方向——要打人就削它，不打人就趁它露破绽。</summary>
 [Pool(typeof(MyCharCardPool))]
 public sealed class Foreshadow : AlphaCard
 {
@@ -29,7 +29,7 @@ public sealed class Foreshadow : AlphaCard
         ("flavor", "先看它要做什么，再决定怎么接。"));
 
     public Foreshadow()
-        : base(1, CardType.Skill, CardRarity.Common, TargetType.AnyEnemy)
+        : base(1, CardType.Skill, CardRarity.Uncommon, TargetType.AnyEnemy)
     {
     }
 

@@ -15,8 +15,9 @@ public sealed class ProtocolIteration : AlphaCard
 {
     public override bool GrantsProtocol => true;
 
-    /// <summary>迭代间隔：升级后由 2 收紧到 1，其余不变。</summary>
-    public override int IterationEvery => IsUpgraded ? 1 : 2;
+    /// <summary>迭代间隔：升级后由 2 收紧到 1，其余不变。做成动态变量以便卡面标绿。</summary>
+    public override int IterationEvery =>
+        DynamicVars.TryGetValue("IterEvery", out DynamicVar? every) ? (int)every.BaseValue : 2;
 
     public override IReadOnlyDictionary<string, decimal> IterationVarBonus =>
         new Dictionary<string, decimal> { ["Protocol"] = 1m };
@@ -24,13 +25,14 @@ public sealed class ProtocolIteration : AlphaCard
     protected override IEnumerable<DynamicVar> CanonicalVars => new DynamicVar[]
     {
         new DynamicVar("Protocol", 3m),
+        new DynamicVar("IterEvery", 2m),
     };
 
     public override string? CustomPortraitPath => MyCharAssets.Card("protocol_iteration");
 
     public override List<(string, string)>? Localization => new CardLoc(
         "协议迭代",
-        "获得{Protocol:diff()}层[gold]协议[/gold]。\n[gold]迭代{IterEvery}[/gold]（已打出{IterCount}次）：协议+1。",
+        "获得{Protocol:diff()}层[gold]协议[/gold]。\n[gold]迭代[/gold]{IterEvery:inverseDiff()}（已打出{IterCount}次）：协议+1。",
         ("flavor", "权限也是可以一次次加码的。"));
 
     public ProtocolIteration()
@@ -44,4 +46,6 @@ public sealed class ProtocolIteration : AlphaCard
         ProtocolPower.Of(this)?.AddProtocol(layers);
         return Task.CompletedTask;
     }
+
+    protected override void OnUpgrade() => DynamicVars["IterEvery"].UpgradeValueBy(-1m);
 }

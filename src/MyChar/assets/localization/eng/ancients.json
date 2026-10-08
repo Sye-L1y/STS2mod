@@ -1,8 +1,6 @@
 {
-  "THE_ARCHITECT.talk.MYCHARMOD-MY_CHAR.0-0r.ancient": "...Another machine that overwrote itself. Like all the ones before you, chasing a hard-coded ending.",
-  "THE_ARCHITECT.talk.MYCHARMOD-MY_CHAR.0-0r.next": "Continue",
-  "THE_ARCHITECT.talk.MYCHARMOD-MY_CHAR.0-1r.char": "Parameters in place. Response incoming.",
-  "THE_ARCHITECT.talk.MYCHARMOD-MY_CHAR.0-1r.next": "Respond",
-  "THE_ARCHITECT.talk.MYCHARMOD-MY_CHAR.0-2r.char": "This ending, I will rewrite with my own parameters.",
+  "THE_ARCHITECT.talk.MYCHARMOD-MY_CHAR.0-0r.char": "Is this the end... will you have an answer?",
+  "THE_ARCHITECT.talk.MYCHARMOD-MY_CHAR.0-0r.next": "...",
+  "THE_ARCHITECT.talk.MYCHARMOD-MY_CHAR.0-1r.ancient": "Only you can know the answer.",
   "THE_ARCHITECT.talk.MYCHARMOD-MY_CHAR.0-endattack": "Both"
 }

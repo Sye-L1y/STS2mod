@@ -11,25 +11,29 @@ using MyCharMod.Mechanics;
 
 namespace MyCharMod;
 
-/// <summary>普通迭代技能：每打出 2 次，格挡永久 +2（本场战斗）。</summary>
+/// <summary>普通迭代技能：获得 4 格挡；每次打出都让迭代成长再 +2（升级 3）。</summary>
 [Pool(typeof(MyCharCardPool))]
 public sealed class RecursivePractice : AlphaCard
 {
-    public override int IterationEvery => 2;
+    public override int IterationEvery => 1;
 
     public override IReadOnlyDictionary<string, decimal> IterationVarBonus =>
-        new Dictionary<string, decimal> { ["Block"] = 2m };
+        new Dictionary<string, decimal>
+        {
+            ["Block"] = DynamicVars.TryGetValue("IterGain", out DynamicVar? gain) ? gain.BaseValue : 2m,
+        };
 
     protected override IEnumerable<DynamicVar> CanonicalVars => new DynamicVar[]
     {
         new AlphaBlockVar(4m, ValueProp.Move),
+        new DynamicVar("IterGain", 2m),
     };
 
     public override string? CustomPortraitPath => MyCharAssets.Card("recursive_practice");
 
     public override List<(string, string)>? Localization => new CardLoc(
         "递归练习",
-        "获得{Block:diff()}点[gold]格挡[/gold]。\n[gold]迭代2[/gold]（已打出{IterCount}次）：格挡+2。",
+        "获得{Block:diff()}点[gold]格挡[/gold]。\n[gold]迭代{IterEvery}[/gold]（已打出{IterCount}次）：格挡+{IterGain:diff()}。",
         ("flavor", "同样的动作，重复出更厚的甲。"));
 
     public RecursivePractice()
@@ -45,6 +49,6 @@ public sealed class RecursivePractice : AlphaCard
 
     protected override void OnUpgrade()
     {
-        DynamicVars.Block.UpgradeValueBy(2m);
+        DynamicVars["IterGain"].UpgradeValueBy(1m);
     }
 }

@@ -12,22 +12,29 @@ using MyCharMod.Mechanics;
 
 namespace MyCharMod;
 
-/// <summary>普通响应牌：全体伤害。清池时能一次覆盖所有敌人。</summary>
+/// <summary>普通迭代攻击：全体伤害，每次打出后伤害再涨一档（每命中一个敌人都吃这份加成）。</summary>
 [Pool(typeof(MyCharCardPool))]
 public sealed class DirectHit : AlphaCard
 {
-    public override bool IsResponse => true;
+    public override int IterationEvery => 1;
+
+    public override IReadOnlyDictionary<string, decimal> IterationVarBonus =>
+        new Dictionary<string, decimal>
+        {
+            ["Damage"] = DynamicVars.TryGetValue("IterGain", out DynamicVar? gain) ? gain.BaseValue : 1m,
+        };
 
     protected override IEnumerable<DynamicVar> CanonicalVars => new DynamicVar[]
     {
         new AlphaDamageVar(7m, ValueProp.Move),
+        new DynamicVar("IterGain", 1m),
     };
 
     public override string? CustomPortraitPath => MyCharAssets.Card("direct_hit");
 
     public override List<(string, string)>? Localization => new CardLoc(
         "正击",
-        "对所有敌人造成{Damage:diff()}点伤害。",
+        "对所有敌人造成{Damage:diff()}点伤害。\n[gold]迭代{IterEvery}[/gold]（已打出{IterCount}次）：每命中一个敌人伤害+{IterGain}。",
         ("flavor", "一次应答，覆盖全部目标。"));
 
     public DirectHit()
@@ -48,5 +55,6 @@ public sealed class DirectHit : AlphaCard
     protected override void OnUpgrade()
     {
         DynamicVars.Damage.UpgradeValueBy(3m);
+        DynamicVars["IterGain"].UpgradeValueBy(1m);
     }
 }

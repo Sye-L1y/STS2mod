@@ -37,6 +37,18 @@ public interface IAlphaProtocolListener
     Task OnAlphaProtocol(PlayerChoiceContext choiceContext, CardModel card);
 }
 
+/// <summary>「协议层数被消耗」的监听者（E17）。供「厄难覆盖」监听，无论消耗来自结算还是协议消耗牌。</summary>
+public interface IAlphaProtocolConsumeListener
+{
+    Task OnAlphaProtocolConsumed(PlayerChoiceContext choiceContext, Player player, int layers);
+}
+
+/// <summary>「一条传参入池」的监听者（E18）。供「终响激发」监听。</summary>
+public interface IAlphaParamListener
+{
+    Task OnAlphaParamAdded(PlayerChoiceContext choiceContext, Player player, ParamEntry entry);
+}
+
 /// <summary>
 /// 起始遗物（普通版 / 古老版）实现它，用来告诉核心层「每满 3 次响应/迭代给几层协议」，
 /// 并让遗物在计数变化时刷新计数条。
@@ -110,17 +122,43 @@ internal static class AlphaHooks
         }
     }
 
+    /// <summary>协议层数被消耗时广播（E17）。<paramref name="layers"/> 为本次实际消耗的层数。</summary>
+    public static async Task ProtocolConsumed(PlayerChoiceContext choiceContext, Player player, int layers)
+    {
+        if (layers <= 0)
+        {
+            return;
+        }
+        foreach (object listener in Listeners(player))
+        {
+            if (listener is IAlphaProtocolConsumeListener consume)
+            {
+                await consume.OnAlphaProtocolConsumed(choiceContext, player, layers);
+            }
+        }
+    }
+
+    /// <summary>一条传参入池时广播（E18）。</summary>
+    public static async Task ParamAdded(PlayerChoiceContext choiceContext, Player player, ParamEntry entry)
+    {
+        foreach (object listener in Listeners(player))
+        {
+            if (listener is IAlphaParamListener param)
+            {
+                await param.OnAlphaParamAdded(choiceContext, player, entry);
+            }
+        }
+    }
+
     /// <summary>
     /// 监听者 = 玩家身上的 Power ∪ 玩家身上的遗物（E6）。
     /// 先拷贝一份再遍历：回调里可能会挂载 / 移除 Power，直接遍历会改集合。
     /// </summary>
-    private static List<object> Listeners(CardModel card)
-    {
-        if (!card.IsMutable || card.Owner is not Player player)
-        {
-            return new List<object>();
-        }
+    private static List<object> Listeners(CardModel card) =>
+        card.IsMutable && card.Owner is Player player ? Listeners(player) : new List<object>();
 
+    private static List<object> Listeners(Player player)
+    {
         var listeners = new List<object>();
         Creature? creature = player.Creature;
         if (creature != null)

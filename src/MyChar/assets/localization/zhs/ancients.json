@@ -1,8 +1,6 @@
 {
-  "THE_ARCHITECT.talk.MYCHARMOD-MY_CHAR.0-0r.ancient": "……又一台把自己写坏了的机器。你和之前的他们一样，都在追一个写死的结局。",
-  "THE_ARCHITECT.talk.MYCHARMOD-MY_CHAR.0-0r.next": "继续",
-  "THE_ARCHITECT.talk.MYCHARMOD-MY_CHAR.0-1r.char": "参数到位，响应即至。",
-  "THE_ARCHITECT.talk.MYCHARMOD-MY_CHAR.0-1r.next": "回应",
-  "THE_ARCHITECT.talk.MYCHARMOD-MY_CHAR.0-2r.char": "这段结局，我会用自己的参数重写一遍。",
+  "THE_ARCHITECT.talk.MYCHARMOD-MY_CHAR.0-0r.char": "这是到终点了吗…你会有答案吗？",
+  "THE_ARCHITECT.talk.MYCHARMOD-MY_CHAR.0-0r.next": "……",
+  "THE_ARCHITECT.talk.MYCHARMOD-MY_CHAR.0-1r.ancient": "答案只有你自己知道。",
   "THE_ARCHITECT.talk.MYCHARMOD-MY_CHAR.0-endattack": "Both"
 }
