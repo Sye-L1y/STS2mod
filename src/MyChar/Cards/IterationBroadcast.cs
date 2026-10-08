@@ -28,7 +28,7 @@ public sealed class IterationBroadcast : AlphaCard
 
     public override List<(string, string)>? Localization => new CardLoc(
         "高阶洞察",
-        "每完成{IterEvery:inverseDiff()}次[gold]迭代[/gold]，[gold]传参[/gold]：给全体敌人{Weak:diff()}层[gold]虚弱[/gold]一次。",
+        "每完成{IterEvery:inverseDiff()}次[gold]迭代[/gold]，就[gold]传参[/gold]：给予全体敌人{Weak:diff()}层[gold]虚弱[/gold]。",
         ("flavor", "每一次循环闭合，都向所有终端广播一条指令。"));
 
     public IterationBroadcast()

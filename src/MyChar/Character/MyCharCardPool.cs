@@ -27,8 +27,8 @@ public sealed class MyCharCardPool : CustomCardPoolModel
     /// <summary>卡背/图鉴里这张卡所属池子的主色。</summary>
     public override Color DeckEntryCardColor => new("D62000");
 
-    /// <summary>能量数字描边色，与卡框（ShaderColor）保持一致。</summary>
-    public override Color EnergyOutlineColor => new("c4d8f6");
+    /// <summary>能量数字描边色：取比卡框（ShaderColor）更暗的蓝紫，避免和卡框同色而看不出描边。</summary>
+    public override Color EnergyOutlineColor => new("717ba8");
 
     /// <summary>卡框颜色（BaseLib 会用 HSV 生成卡框材质）。</summary>
     public override Color ShaderColor => new("c4d8f6");

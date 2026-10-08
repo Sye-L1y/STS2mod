@@ -17,12 +17,15 @@ namespace MyCharMod.Mechanics;
 ///
 /// 走引擎的 <see cref="TryModifyEnergyCostInCombat"/>：与「本回合免费」（E5 的 Local 修正）互不干扰，
 /// 也只对「玩家自己的迭代牌」生效。
+///
+/// **叠加**：<see cref="PowerStackType.Counter"/>，份数记在 <see cref="PowerModel.Amount"/>，
+/// 每份再降 1 费（2 份即 -2），状态栏数字即份数。
 /// </summary>
 public sealed class ElegantFormulaPower : CustomPowerModel, IAddDumbVariablesToPowerDescription
 {
     public override PowerType Type => PowerType.Buff;
 
-    public override PowerStackType StackType => PowerStackType.Single;
+    public override PowerStackType StackType => PowerStackType.Counter;
 
     public override bool ShouldScaleInMultiplayer => false;
 
@@ -38,11 +41,17 @@ public sealed class ElegantFormulaPower : CustomPowerModel, IAddDumbVariablesToP
     public override List<(string, string)>? Localization => new()
     {
         ("title", "优美公式"),
-        ("description", "本场战斗中，所有已完成[gold]迭代[/gold]次数≥{Threshold}的[gold]迭代[/gold]牌费用-1。"),
+        ("description", "本场战斗中，所有已完成[gold]迭代[/gold]次数≥{Threshold}的[gold]迭代[/gold]牌费用-{Reduction}。"),
     };
 
-    public void AddDumbVariablesToPowerDescription(LocString description) =>
+    /// <summary>本牌重复打出的份数（Counter 叠层层数）：先打出的那张为 1。</summary>
+    private int Copies => System.Math.Max(1, Amount);
+
+    public void AddDumbVariablesToPowerDescription(LocString description)
+    {
         description.Add("Threshold", DynamicVars["Threshold"].IntValue);
+        description.Add("Reduction", Copies);
+    }
 
     /// <summary>由「优美公式」卡牌在打出时写入阈值（本牌升级后更低）。</summary>
     public void Configure(int threshold) => DynamicVars["Threshold"].BaseValue = threshold;
@@ -73,7 +82,7 @@ public sealed class ElegantFormulaPower : CustomPowerModel, IAddDumbVariablesToP
             return false;
         }
 
-        modifiedCost = Math.Max(0m, originalCost - 1m);
+        modifiedCost = Math.Max(0m, originalCost - Copies);
         return true;
     }
 }

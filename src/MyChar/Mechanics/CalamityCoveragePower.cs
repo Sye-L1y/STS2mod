@@ -20,13 +20,16 @@ namespace MyCharMod.Mechanics;
 /// （N 由卡牌打出时经 <see cref="Configure"/> 写入，基础 3 / 升级 5）。
 ///
 /// 监听 E17「协议消耗」事件——无论消耗来自回合结算还是协议消耗牌（歼灭龙息 / 紧急护壁 / 龙吼模块）。
+///
+/// **叠加**：<see cref="PowerStackType.Counter"/>，份数记在 <see cref="PowerModel.Amount"/>，
+/// 每层协议消耗给的灾厄层数 = 卡面值 × 份数，状态栏数字即份数。
 /// </summary>
 public sealed class CalamityCoveragePower : CustomPowerModel, IAlphaProtocolConsumeListener,
     IAddDumbVariablesToPowerDescription
 {
     public override PowerType Type => PowerType.Buff;
 
-    public override PowerStackType StackType => PowerStackType.Single;
+    public override PowerStackType StackType => PowerStackType.Counter;
 
     public override bool ShouldScaleInMultiplayer => false;
 
@@ -45,8 +48,11 @@ public sealed class CalamityCoveragePower : CustomPowerModel, IAlphaProtocolCons
         ("description", "消耗[gold]协议[/gold]时，每消耗1层，随机给予一个敌人{Doom}层[gold]灾厄[/gold]。"),
     };
 
+    /// <summary>本牌重复打出的份数（Counter 叠层层数）：先打出的那张为 1。</summary>
+    private int Copies => System.Math.Max(1, Amount);
+
     public void AddDumbVariablesToPowerDescription(LocString description) =>
-        description.Add("Doom", DynamicVars["Doom"].IntValue);
+        description.Add("Doom", DynamicVars["Doom"].IntValue * Copies);
 
     /// <summary>由「厄难覆盖」卡牌在打出时写入每层消耗给的灾厄层数（本牌升级后更高）。</summary>
     public void Configure(int doom) => DynamicVars["Doom"].BaseValue = doom;
@@ -69,7 +75,7 @@ public sealed class CalamityCoveragePower : CustomPowerModel, IAlphaProtocolCons
             return;
         }
 
-        decimal doom = DynamicVars["Doom"].BaseValue;
+        decimal doom = DynamicVars["Doom"].BaseValue * Copies;
         for (int i = 0; i < layers; i++)
         {
             Creature? target = player.RunState.Rng.CombatTargets.NextItem(enemies);

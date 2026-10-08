@@ -21,13 +21,16 @@ namespace MyCharMod.Mechanics;
 ///   2. 触发[gold]响应[/gold]时，所有敌人获得 M 层[gold]灾厄[/gold]（M 基础 5 / 升级 7）。
 ///
 /// 监听 E18「传参入池」与 E2「响应触发」两个事件。数值由卡牌打出时经 <see cref="Configure"/> 写入。
+///
+/// **叠加**：<see cref="PowerStackType.Counter"/>，份数记在 <see cref="PowerModel.Amount"/>，
+/// 失力量与灾厄数值均 × 份数，状态栏数字即份数。
 /// </summary>
 public sealed class FinalEchoStimulusPower : CustomPowerModel, IAlphaParamListener, IAlphaResponseListener,
     IAddDumbVariablesToPowerDescription
 {
     public override PowerType Type => PowerType.Buff;
 
-    public override PowerStackType StackType => PowerStackType.Single;
+    public override PowerStackType StackType => PowerStackType.Counter;
 
     public override bool ShouldScaleInMultiplayer => false;
 
@@ -47,10 +50,13 @@ public sealed class FinalEchoStimulusPower : CustomPowerModel, IAlphaParamListen
         ("description", "[gold]传参[/gold]时，所有敌人本回合失去{StrengthLoss}点[gold]力量[/gold]；触发[gold]响应[/gold]时，所有敌人获得{Doom}层[gold]灾厄[/gold]。"),
     };
 
+    /// <summary>本牌重复打出的份数（Counter 叠层层数）：先打出的那张为 1。</summary>
+    private int Copies => System.Math.Max(1, Amount);
+
     public void AddDumbVariablesToPowerDescription(LocString description)
     {
-        description.Add("StrengthLoss", DynamicVars["StrengthLoss"].IntValue);
-        description.Add("Doom", DynamicVars["Doom"].IntValue);
+        description.Add("StrengthLoss", DynamicVars["StrengthLoss"].IntValue * Copies);
+        description.Add("Doom", DynamicVars["Doom"].IntValue * Copies);
     }
 
     /// <summary>由「终响激发」卡牌在打出时写入失力量与灾厄数值（本牌升级后更高）。</summary>
@@ -72,7 +78,7 @@ public sealed class FinalEchoStimulusPower : CustomPowerModel, IAlphaParamListen
             return;
         }
 
-        decimal loss = DynamicVars["StrengthLoss"].BaseValue;
+        decimal loss = DynamicVars["StrengthLoss"].BaseValue * Copies;
         foreach (Creature enemy in combatState.HittableEnemies)
         {
             await PowerCmd.Apply<PiercingWailPower>(choiceContext, enemy, loss, Owner, null);
@@ -88,7 +94,7 @@ public sealed class FinalEchoStimulusPower : CustomPowerModel, IAlphaParamListen
             return;
         }
 
-        decimal doom = DynamicVars["Doom"].BaseValue;
+        decimal doom = DynamicVars["Doom"].BaseValue * Copies;
         foreach (Creature enemy in combatState.HittableEnemies)
         {
             await PowerCmd.Apply<DoomPower>(choiceContext, enemy, doom, Owner, null);

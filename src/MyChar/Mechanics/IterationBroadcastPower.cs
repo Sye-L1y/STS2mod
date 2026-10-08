@@ -13,8 +13,11 @@ namespace MyCharMod.Mechanics;
 
 /// <summary>
 /// 「高阶洞察」的载体：每累计完成 <see cref="Data.IterEvery"/> 次迭代，
-/// 就往传参池里塞一条「给全体敌人 N 层虚弱一次」（N 由打出时的升级状态决定）。
+/// 就往传参池里塞一条「给全体敌人 N 层虚弱」（N 由打出时的升级状态决定）。
 /// 走 <see cref="IAlphaIterationListener"/> 监听，不自己产出迭代。
+///
+/// **叠加**：<see cref="PowerStackType.Counter"/>，本牌重复打出的份数记在 <see cref="PowerModel.Amount"/>；
+/// 每次触发的虚弱层数 = 卡面值 × 份数，状态栏数字即份数。
 /// </summary>
 public sealed class IterationBroadcastPower : CustomPowerModel, IAlphaIterationListener,
     IAddDumbVariablesToPowerDescription
@@ -34,7 +37,7 @@ public sealed class IterationBroadcastPower : CustomPowerModel, IAlphaIterationL
 
     public override PowerType Type => PowerType.Buff;
 
-    public override PowerStackType StackType => PowerStackType.Single;
+    public override PowerStackType StackType => PowerStackType.Counter;
 
     public override bool ShouldScaleInMultiplayer => false;
 
@@ -45,16 +48,19 @@ public sealed class IterationBroadcastPower : CustomPowerModel, IAlphaIterationL
     public override List<(string, string)>? Localization => new()
     {
         ("title", "高阶洞察"),
-        ("description", "每完成{IterEvery}次[gold]迭代[/gold]，[gold]传参[/gold]：给全体敌人{Weak}层[gold]虚弱[/gold]一次。"),
+        ("description", "每完成{IterEvery}次[gold]迭代[/gold]，就[gold]传参[/gold]：给予全体敌人{Weak}层[gold]虚弱[/gold]。"),
     };
 
     protected override object? InitInternalData() => new Data();
 
     public Data Core => GetInternalData<Data>();
 
+    /// <summary>本牌重复打出的份数（Counter 叠层层数）：先打出的那张为 1。</summary>
+    private int Copies => System.Math.Max(1, Amount);
+
     public void AddDumbVariablesToPowerDescription(LocString description)
     {
-        description.Add("Weak", Core.WeakLayers);
+        description.Add("Weak", Core.WeakLayers * Copies);
         description.Add("IterEvery", Core.IterEvery);
     }
 
@@ -75,7 +81,7 @@ public sealed class IterationBroadcastPower : CustomPowerModel, IAlphaIterationL
             await core.AddParamWithHook(choiceContext, new ParamEntry
             {
                 Kind = ParamKind.DebuffAll,
-                Value = Core.WeakLayers,
+                Value = Core.WeakLayers * Copies,
                 Variant = (int)DebuffKind.Weak,
                 SourceId = "ITERATION_BROADCAST",
             });

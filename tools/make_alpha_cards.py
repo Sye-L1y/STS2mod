@@ -103,6 +103,11 @@ JOBS = [
     ("high_energy_attachment", "高能附加", SKILL),
     # —— 批次 C（v1.9） ——
     ("stack_grudge", "叠仇", ATTACK),
+    # —— 补漏（v1.9 反馈） ——
+    # CalamityCoverage 原来引用 "disaster_habit"，该图从未生成 →
+    # BaseLib 的 CustomCardPortraitPath 在 ResourceLoader.Load 返回 null 后取 .ResourcePath，
+    # 直接抛 NullReferenceException 并中断 ModelDb.Preload 的整段卡面预加载。
+    ("calamity_coverage", "厄难覆盖", POWER),
 ]
 
 

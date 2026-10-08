@@ -2,10 +2,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using BaseLib.Abstracts;
+using BaseLib.Patches.Localization;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Entities.Powers;
 using MegaCrit.Sts2.Core.GameActions.Multiplayer;
+using MegaCrit.Sts2.Core.Localization;
 using MegaCrit.Sts2.Core.Models;
 
 namespace MyCharMod.Mechanics;
@@ -14,12 +16,16 @@ namespace MyCharMod.Mechanics;
 /// 「完全形态」的载体：
 ///   1) 迭代牌完成一次迭代时，给所有迭代牌 +1 计数（每回合一次）；
 ///   2) 响应牌触发响应时，把本次消耗的一条随机传参返还到池里。
+///
+/// **叠加**：<see cref="PowerStackType.Counter"/>，份数记在 <see cref="PowerModel.Amount"/>，
+/// 每次推进的格数 = 份数（每回合仍只触发一次），状态栏数字即份数。
 /// </summary>
-public sealed class FullFormPower : CustomPowerModel, IAlphaIterationListener, IAlphaResponseListener
+public sealed class FullFormPower : CustomPowerModel, IAlphaIterationListener, IAlphaResponseListener,
+    IAddDumbVariablesToPowerDescription
 {
     public override PowerType Type => PowerType.Buff;
 
-    public override PowerStackType StackType => PowerStackType.Single;
+    public override PowerStackType StackType => PowerStackType.Counter;
 
     public override bool ShouldScaleInMultiplayer => false;
 
@@ -30,8 +36,14 @@ public sealed class FullFormPower : CustomPowerModel, IAlphaIterationListener, I
     public override List<(string, string)>? Localization => new()
     {
         ("title", "完全形态"),
-        ("description", "迭代牌完成迭代时，所有迭代牌计数+1（每回合一次）；响应牌响应时，返还一条随机已消耗传参。"),
+        ("description", "迭代牌完成迭代时，所有迭代牌计数+{Advance}（每回合一次）；响应牌响应时，返还一条随机已消耗传参。"),
     };
+
+    /// <summary>本牌重复打出的份数（Counter 叠层层数）：先打出的那张为 1。</summary>
+    private int Copies => System.Math.Max(1, Amount);
+
+    public void AddDumbVariablesToPowerDescription(LocString description) =>
+        description.Add("Advance", Copies);
 
     private sealed class Data
     {
@@ -81,7 +93,7 @@ public sealed class FullFormPower : CustomPowerModel, IAlphaIterationListener, I
 
         foreach (AlphaCard target in targets)
         {
-            await core.AdvanceIteration(choiceContext, target, 1);
+            await core.AdvanceIteration(choiceContext, target, Copies);
         }
     }
 

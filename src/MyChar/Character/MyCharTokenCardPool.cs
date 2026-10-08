@@ -25,7 +25,8 @@ public sealed class MyCharTokenCardPool : CustomCardPoolModel
 
     public override Color DeckEntryCardColor => new("D62000");
 
-    public override Color EnergyOutlineColor => new("802020");
+    /// <summary>能量数字描边色：与角色主池统一（比卡框更暗的蓝紫）。</summary>
+    public override Color EnergyOutlineColor => new("717ba8");
 
     public override Color ShaderColor => new("c4d8f6");
 

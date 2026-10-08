@@ -1,4 +1,4 @@
-"""为「阿尔法机」的两个可见 Power 生成占位图标（64x64，透明底）。
+"""为「阿尔法机」的可见 Power 生成占位图标（64x64，透明底）。
 
 本体 power_atlas 的图元就是 64x64（见 images/atlases/power_atlas.sprites/*.tres 的 region），
 所以这里也按 64x64 出图，换真美术时保持文件名不变即可。
@@ -33,6 +33,9 @@ JOBS = [
     ("armor_forging", (200, 170, 96)),
     ("personality_training", (196, 110, 196)),
     ("fast_iteration", (120, 196, 150)),
+    # —— 补漏（v1.9 反馈） ——
+    # 「紧急护壁」的封锁 Power：原来引用 no_attack.png，该图从未生成。
+    ("no_attack", (198, 96, 88)),
 ]
 
 
@@ -105,6 +108,27 @@ def draw_pending_draw(accent: tuple[int, int, int]) -> Image.Image:
     return img.resize((SIZE, SIZE), Image.Resampling.LANCZOS)
 
 
+def draw_no_attack(accent: tuple[int, int, int]) -> Image.Image:
+    """封锁：一把被斜线划掉的剑。"""
+    img, d = new_canvas()
+    s = SIZE * SS
+    d.ellipse([2 * SS, 2 * SS, s - 2 * SS, s - 2 * SS],
+              fill=(24, 26, 34, 235), outline=(*accent, 255), width=2 * SS)
+
+    # 剑：竖着的剑身 + 护手 + 剑首
+    d.rounded_rectangle([30 * SS, 14 * SS, 34 * SS, 44 * SS], radius=1 * SS,
+                        fill=(*accent, 235))
+    d.rounded_rectangle([23 * SS, 20 * SS, 41 * SS, 24 * SS], radius=1 * SS,
+                        fill=(*accent, 235))
+    d.rounded_rectangle([29 * SS, 44 * SS, 35 * SS, 49 * SS], radius=1 * SS,
+                        fill=(*accent, 235))
+
+    # 禁止斜线
+    d.line([(15 * SS, 15 * SS), (49 * SS, 49 * SS)], fill=(232, 88, 80, 255),
+           width=4 * SS)
+    return img.resize((SIZE, SIZE), Image.Resampling.LANCZOS)
+
+
 def main() -> None:
     OUT.mkdir(parents=True, exist_ok=True)
     drawers = {
@@ -120,6 +144,7 @@ def main() -> None:
         "armor_forging": draw_protocol,
         "personality_training": draw_protocol,
         "fast_iteration": draw_protocol,
+        "no_attack": draw_no_attack,
     }
     for stem, accent in JOBS:
         img = drawers[stem](accent)

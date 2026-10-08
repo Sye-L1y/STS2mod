@@ -1,0 +1,23 @@
+[gd_scene load_steps=2 format=3]
+
+; 顶部栏（左上角）角色头像。结构复刻本体 scenes/ui/character_icons/ironclad_icon.tscn：
+; 单节点 Control 场景，只有一个铺满父节点的 TextureRect。
+;
+; ⚠ 左上角头像走的是 CharacterModel.Icon（**场景**，路径 ui/character_icons/<id>_icon），
+;   不是 IconTexturePath（那张贴图只用于图鉴 / 古人事对话 / 多人房间等其它界面）。
+;   只改 IconTexturePath 不会换掉左上角头像，必须像这里一样提供自定义场景 + override CustomIconPath。
+;
+; 贴图沿用 char/hud.png（128x128，与本体顶部栏图标同规格）。
+
+[ext_resource type="Texture2D" path="res://MyChar/images/char/hud.png" id="1_hud"]
+
+[node name="MyCharIcon" type="TextureRect"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("1_hud")
+expand_mode = 1
+stretch_mode = 5

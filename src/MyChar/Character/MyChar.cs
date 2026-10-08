@@ -20,10 +20,10 @@ public sealed class MyChar : PlaceholderCharacterModel
     public override string PlaceholderID => "ironclad";
 
     // —— 自定义美术：贴图类 + 场景类 ——
-    // 场景类资源（assets/scenes/*.tscn，静态立绘版）由 PckPacker 之外的 tools/pck_append.py 追加进 pck。
+    // 场景类资源（src/MyChar/scenes/*.tscn，静态立绘版）由 PckPacker 之外的 tools/pck_append.py 追加进 pck。
     // 场景里 body 是 Sprite2D 而非 SpineSprite：战斗/火堆本体代码会自动走无 Spine 分支；
     // 商店需要 StaticBodyVisualsPatch 拦截 _Ready / PlayAnimation（否则 MegaSprite 校验会炸）。
-    // 能量计数器 / 角色图标场景 / 卡牌轨迹（CustomEnergyCounterPath / CustomIconPath / CustomTrailPath）
+    // 能量计数器 / 卡牌轨迹（CustomEnergyCounterPath / CustomTrailPath）
     // 还没有专属美术，继续沿用 PlaceholderID = ironclad 的占位场景。
     public override string CustomVisualPath => MyCharAssets.Scene("creature_visuals");
 
@@ -32,6 +32,13 @@ public sealed class MyChar : PlaceholderCharacterModel
     public override string CustomRestSiteAnimPath => MyCharAssets.Scene("rest_site");
 
     public override string CustomMerchantAnimPath => MyCharAssets.Scene("merchant");
+
+    /// <summary>
+    /// 顶部栏（左上角）角色头像。注意这里是**场景**，不是贴图：
+    /// 引擎取的 <c>CharacterModel.Icon</c> = <c>ui/character_icons/&lt;id&gt;_icon</c>（PackedScene.Control），
+    /// 在上面叠一个 TextureRect 装头像。只 override <see cref="CustomIconTexturePath"/> 换不掉左上角。
+    /// </summary>
+    public override string CustomIconPath => MyCharAssets.Scene("character_icon");
 
     public override string? CustomCharacterSelectIconPath => MyCharAssets.CharacterSelect;
 

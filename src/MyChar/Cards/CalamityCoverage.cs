@@ -22,7 +22,7 @@ public sealed class CalamityCoverage : AlphaCard
         new DynamicVar("Doom", 3m),
     };
 
-    public override string? CustomPortraitPath => MyCharAssets.Card("disaster_habit");
+    public override string? CustomPortraitPath => MyCharAssets.Card("calamity_coverage");
 
     public override List<(string, string)>? Localization => new CardLoc(
         "厄难覆盖",
