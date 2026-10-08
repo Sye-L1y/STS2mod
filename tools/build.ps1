@@ -55,6 +55,12 @@ $scenesDir = Join-Path $root "src\$modId\scenes"
 python (Join-Path $PSScriptRoot 'pck_append.py') $pck $scenesDir "$modId/scenes" '.tscn'
 if ($LASTEXITCODE -ne 0) { throw "pck_append 失败（exit $LASTEXITCODE）" }
 
+# 按 Godot 的真实读法校验 pck 目录。这里出问题的话游戏里会「所有资源为空」，
+# 但 C# 编译和 pck 生成都不会报错，所以必须显式拦截。
+Write-Host "[1.6/3] 校验 pck 目录结构 ..." -ForegroundColor Cyan
+python (Join-Path $PSScriptRoot 'pck_verify.py') $pck
+if ($LASTEXITCODE -ne 0) { throw "pck 校验失败：目录写法与 Godot 约定不符，部署会导致游戏内资源全部为空" }
+
 Write-Host "[2/3] 暂存 -> pack\$modId" -ForegroundColor Cyan
 New-Item -ItemType Directory -Force -Path $pack | Out-Null
 Copy-Item $dll $pack -Force

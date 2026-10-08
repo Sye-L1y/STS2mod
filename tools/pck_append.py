@@ -35,7 +35,7 @@ def read_dir(data: bytes):
         (plen,) = struct.unpack_from("<I", data, off)
         off += 4
         raw = data[off:off + plen]
-        off += plen + (4 - (plen % 4)) % 4
+        off += plen
         foff, fsize = struct.unpack_from("<QQ", data, off)
         off += 16 + 16
         eflags = 0
@@ -100,12 +100,17 @@ def main() -> int:
 
     # 重新编目录写到文件尾（目录偏移本身是绝对文件偏移）
     # 旧条目的 offset 在 read_dir 里已加上 file_base 变成绝对值，写回时再减掉。
+    #
+    # 路径字段约定（必须和 PckPacker / Godot 的读取方式完全一致）：
+    #   plen = 路径字节的 4 字节对齐长度，补齐的 \x00 算在 plen 之内。
+    #   Godot 读到 plen 后「不做额外对齐」，直接取 metadata；写成
+    #   「plen = 真实长度 + 外部补齐」会让之后的所有字段错位，整个 pck 的资源全部失效。
     dir_buf = bytearray()
     dir_buf += struct.pack("<I", len(entries))
     for e in entries:
         raw = e["path"].encode("utf-8")
-        dir_buf += struct.pack("<I", len(raw)) + raw
-        dir_buf += b"\x00" * ((4 - (len(raw) % 4)) % 4)
+        padded = raw + b"\x00" * ((-len(raw)) % 4)
+        dir_buf += struct.pack("<I", len(padded)) + padded
         dir_buf += struct.pack("<QQ", e["offset"] - file_base, e["size"])
         dir_buf += e.get("md5") or hashlib.md5(data[e["offset"]:e["offset"] + e["size"]]).digest()
         if ver >= 2:
