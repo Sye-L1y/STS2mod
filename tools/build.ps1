@@ -50,6 +50,11 @@ $pck = Join-Path $outDir "$modId.pck"
 if (-not (Test-Path $dll)) { throw "找不到产物：$dll" }
 if (-not (Test-Path $pck)) { throw "找不到产物：$pck（PckPacker 没打成功？看编译日志里的 'PCK packed'）" }
 
+Write-Host "[1.5/3] 追加场景 tscn 进 pck ..." -ForegroundColor Cyan
+$scenesDir = Join-Path $root "src\$modId\scenes"
+python (Join-Path $PSScriptRoot 'pck_append.py') $pck $scenesDir "$modId/scenes" '.tscn'
+if ($LASTEXITCODE -ne 0) { throw "pck_append 失败（exit $LASTEXITCODE）" }
+
 Write-Host "[2/3] 暂存 -> pack\$modId" -ForegroundColor Cyan
 New-Item -ItemType Directory -Force -Path $pack | Out-Null
 Copy-Item $dll $pack -Force

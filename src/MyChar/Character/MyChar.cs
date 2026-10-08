@@ -19,10 +19,20 @@ public sealed class MyChar : PlaceholderCharacterModel
 {
     public override string PlaceholderID => "ironclad";
 
-    // —— 自定义美术：只替换"贴图"类资源 ——
-    // 场景类资源（CustomVisualPath 战斗立绘、CustomIconPath 图标场景、能量计数器、休息处/商人动画、
-    // CustomCharacterSelectBg 选人背景）都是 .tscn，PckPacker 不支持打包场景，
-    // 所以继续沿用 PlaceholderID = ironclad 的占位场景。等有真立绘时再改用 Godot 导出。
+    // —— 自定义美术：贴图类 + 场景类 ——
+    // 场景类资源（assets/scenes/*.tscn，静态立绘版）由 PckPacker 之外的 tools/pck_append.py 追加进 pck。
+    // 场景里 body 是 Sprite2D 而非 SpineSprite：战斗/火堆本体代码会自动走无 Spine 分支；
+    // 商店需要 StaticBodyVisualsPatch 拦截 _Ready / PlayAnimation（否则 MegaSprite 校验会炸）。
+    // 能量计数器 / 角色图标场景 / 卡牌轨迹（CustomEnergyCounterPath / CustomIconPath / CustomTrailPath）
+    // 还没有专属美术，继续沿用 PlaceholderID = ironclad 的占位场景。
+    public override string CustomVisualPath => MyCharAssets.Scene("creature_visuals");
+
+    public override string CustomCharacterSelectBg => MyCharAssets.Scene("select_bg");
+
+    public override string CustomRestSiteAnimPath => MyCharAssets.Scene("rest_site");
+
+    public override string CustomMerchantAnimPath => MyCharAssets.Scene("merchant");
+
     public override string? CustomCharacterSelectIconPath => MyCharAssets.CharacterSelect;
 
     public override string? CustomCharacterSelectLockedIconPath => MyCharAssets.CharacterSelectLocked;

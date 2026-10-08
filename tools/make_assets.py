@@ -22,11 +22,12 @@ from PIL import Image, ImageFilter
 
 ROOT = Path(__file__).resolve().parent.parent
 RAW = ROOT / ".artwork" / "raw"
+ART = ROOT / ".artwork"  # 场景类新图直接放 .artwork 根目录（中文名）
 OUT = ROOT / "src" / "MyChar" / "assets" / "images"
 
 CARD = (500, 380)
 
-# (源文件, 目标路径, 宽, 高, 处理方式)
+# (源文件, 目标路径, 宽, 高, 处理方式)  —— 源文件在 .artwork/raw/
 #   crop  = 居中裁剪到目标比例后缩放（源图有实底背景）
 #   cut   = 四角采样抠背景 + 居中留白（源图是纯色背景的单个物件）
 #   alpha = 源图自带透明通道，只做等比缩放 + 居中留白，不抠背景
@@ -49,6 +50,23 @@ JOBS = [
     ("potion_temp_protocol.png", "potions/temp_protocol.png", 256, 256, "alpha"),
     ("potion_exp_record.png", "potions/exp_record.png", 256, 256, "alpha"),
     ("potion_special_param.png", "potions/special_param.png", 256, 256, "alpha"),
+]
+
+# 场景类图（源文件在 .artwork/ 根目录，中文名），供 assets/scenes/*.tscn 引用。
+# (源文件, 目标路径, 宽, 高, 处理方式)
+#   crop      = 居中裁剪到目标比例后缩放（实底背景图）
+#   scene_box = 按 alpha bbox 裁掉透明边 → 等比缩放到 (宽,高) 框内（透明立绘图）
+SCENE_JOBS = [
+    # 选人背景：char_select_bg 场景矩形是 2560x1200（ironclad 原版 offset 实测）
+    ("选人背景.png", "scene/select_bg.png", 2560, 1200, "crop"),
+    # 战斗立绘：NCreatureVisuals 里 Bounds 约 242x278，立绘高 320 正好占满
+    ("α战斗.png", "scene/combat.png", 200, 320, "scene_box"),
+    # 失败（倒地）：横躺构图，按高 220 出图
+    ("α失败.png", "scene/defeat.png", 340, 220, "scene_box"),
+    # 商店：ironclad merchant scale 0.47，高 420 接近原版占比
+    ("α商店.png", "scene/merchant.png", 220, 420, "scene_box"),
+    # 火堆休息：rest_site 场景 root scale 0.76，高 340
+    ("沉睡少女.png", "scene/rest_site.png", 300, 340, "scene_box"),
 ]
 
 
@@ -123,6 +141,20 @@ def make_locked(img: Image.Image) -> Image.Image:
     return rgb.convert("RGBA")
 
 
+def fit_box(img: Image.Image, max_w: int, max_h: int, alpha_threshold: int = 16) -> Image.Image:
+    """透明立绘图：按 alpha 阈值裁掉透明/杂点边 → 等比缩放到框内（不做画布填充）。
+    AI 生成图边缘常有低透明度杂点，getbbox() 会被它们撑大，所以先做阈值化。"""
+    from PIL import Image as _Image
+
+    alpha = img.getchannel("A").point(lambda a: 255 if a > alpha_threshold else 0)
+    bbox = alpha.getbbox()
+    if bbox:
+        img = img.crop(bbox)
+    scale = min(max_w / img.width, max_h / img.height)
+    size = (max(1, round(img.width * scale)), max(1, round(img.height * scale)))
+    return img.resize(size, _Image.Resampling.LANCZOS)
+
+
 def save(img: Image.Image, dst: str) -> None:
     target = OUT / dst
     target.parent.mkdir(parents=True, exist_ok=True)
@@ -132,6 +164,7 @@ def save(img: Image.Image, dst: str) -> None:
 
 def main() -> int:
     missing = [src for src, *_ in JOBS if not (RAW / src).exists()]
+    missing += [src for src, *_ in SCENE_JOBS if not (ART / src).exists()]
     if missing:
         print(f"缺少原始图：{missing}", file=sys.stderr)
         return 1
@@ -154,11 +187,25 @@ def main() -> int:
         save(img, dst)
         made[dst] = img
 
+    # 场景类图（.artwork 根目录）
+    for src, dst, w, h, mode in SCENE_JOBS:
+        if src not in cache:
+            cache[src] = Image.open(ART / src).convert("RGBA")
+
+        img = cache[src]
+        if mode == "scene_box":
+            img = fit_box(img, w, h)
+        else:  # crop
+            img = center_crop(img, w / h).resize((w, h), Image.Resampling.LANCZOS)
+
+        save(img, dst)
+        made[dst] = img
+
     # 由已有图派生
     save(make_outline(made["char/hud.png"]), "char/hud_outline.png")
     save(make_locked(made["char/select.png"]), "char/select_locked.png")
 
-    print(f"\n共 {len(JOBS) + 2} 张 -> {OUT}")
+    print(f"\n共 {len(JOBS) + len(SCENE_JOBS) + 2} 张 -> {OUT}")
     return 0
 
 

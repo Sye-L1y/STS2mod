@@ -1,0 +1,16 @@
+[gd_scene load_steps=3 format=3]
+
+; 商店立绘（静态图版）。结构参考本体 scenes/merchant/characters/ironclad_merchant.tscn，
+; SpineSprite 换成 Sprite2D。
+; ⚠ 本体 NMerchantCharacter._Ready / PlayAnimation 会对 GetChild(0) 强行包 MegaSprite，
+;   非 SpineSprite 会抛异常——mod 里 StaticBodyVisualsPatch 会在这两个方法前拦截跳过。
+
+[ext_resource type="Script" path="res://src/Core/Nodes/Screens/Shops/NMerchantCharacter.cs" id="1_script"]
+[ext_resource type="Texture2D" path="res://MyChar/images/scene/merchant.png" id="2_merchant"]
+
+[node name="MyCharMerchant" type="Node2D"]
+script = ExtResource("1_script")
+
+[node name="Visuals" type="Sprite2D" parent="."]
+position = Vector2(0, -210)
+texture = ExtResource("2_merchant")

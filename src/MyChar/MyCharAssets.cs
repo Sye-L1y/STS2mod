@@ -14,8 +14,12 @@ namespace MyCharMod;
 public static class MyCharAssets
 {
     private const string Root = "res://MyChar/images/";
+    private const string SceneRoot = "res://MyChar/scenes/";
 
     public static string Image(string relativePath) => Root + relativePath;
+
+    /// <summary>场景类资源（.tscn），由 tools/pck_append.py 追加进 pck（PckPacker 不支持 .tscn）。</summary>
+    public static string Scene(string name) => SceneRoot + name + ".tscn";
 
     // —— 角色 ——
     public static string CharacterSelect => Image("char/select.png");
