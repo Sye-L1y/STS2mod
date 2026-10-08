@@ -1,0 +1,4 @@
+# 场景文件会按原始字节追加进 pck（见 tools/pck_append.py）。
+# 仓库开着 core.autocrlf=true，若不锁定换行，别的机器 checkout 出 CRLF 会让 pck 内容
+# 与本地验证过的字节不一致。这里强制 LF，保证打进 pck 的字节可复现。
+*.tscn text eol=lf
