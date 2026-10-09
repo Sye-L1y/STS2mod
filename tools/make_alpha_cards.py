@@ -135,6 +135,13 @@ JOBS = [
     ("strike_test", "击打测试", ATTACK),
     ("pre_input", "预输入", SKILL),
     ("data_simulation", "数据模拟", ATTACK),
+    # —— 遗留牌第三批（v1.12 · 2026-10-09） ——
+    ("cold_breath", "冷息", POWER),
+    ("offense_defense", "攻守兼备", ATTACK),
+    ("anomaly_analysis", "异常解析", SKILL),
+    ("second_input", "二次输入", ATTACK),
+    ("multi_layer_output", "多层网络输出", ATTACK),
+    ("soul_memory", "灵魂记忆", SKILL),
 ]
 
 

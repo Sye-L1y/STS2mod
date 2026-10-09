@@ -49,6 +49,7 @@ public sealed class SpecialParamPotion : CustomPotionModel
         AlphaCorePower? core = AlphaCorePower.Of(Owner);
         if (core != null)
         {
+            core.BeginParamBatch();
             await core.AddParamWithHook(choiceContext, new ParamEntry
             {
                 Kind = ParamKind.FreePlayRareCard,

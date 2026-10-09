@@ -112,6 +112,7 @@ public sealed class FullFormPower : CustomPowerModel, IAlphaIterationListener, I
         List<ParamEntry> consumed = core.LastConsumed.ToList();
 
         // 每次独立随机取一条，允许重复 —— 同一条消耗可能被返还多次。
+        core.BeginParamBatch();
         for (int i = 0; i < Copies; i++)
         {
             ParamEntry? entry = player.RunState.Rng.CombatTargets.NextItem(consumed);

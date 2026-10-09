@@ -40,6 +40,9 @@ JOBS = [
     ("inertia", (120, 196, 150)),
     ("pipeline", (150, 170, 210)),
     ("infinite_injection", (176, 128, 214)),
+    # —— 遗留牌补做（v1.12 · 2026-10-09） ——
+    ("cold_breath", (140, 200, 220)),
+    ("multi_layer_output", (198, 84, 72)),
 ]
 
 
@@ -152,6 +155,8 @@ def main() -> None:
         "inertia": draw_protocol,
         "pipeline": draw_protocol,
         "infinite_injection": draw_protocol,
+        "cold_breath": draw_protocol,
+        "multi_layer_output": draw_protocol,
     }
     for stem, accent in JOBS:
         img = drawers[stem](accent)

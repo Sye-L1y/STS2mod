@@ -79,6 +79,7 @@ public sealed class IterationBroadcastPower : CustomPowerModel, IAlphaIterationL
         AlphaCorePower? core = player == null ? null : AlphaCorePower.Of(player);
         if (core != null)
         {
+            core.BeginParamBatch();
             await core.AddParamWithHook(choiceContext, new ParamEntry
             {
                 Kind = ParamKind.DebuffAll,

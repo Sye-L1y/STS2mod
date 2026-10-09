@@ -68,6 +68,12 @@ public sealed class AlphaCorePower : CustomPowerModel, IAddDumbVariablesToPowerD
         /// <summary>「预输入」：下一次响应**不消耗**传参（池原样保留）。只生效一次。</summary>
         public bool NextResponseFree;
 
+        /// <summary>
+        /// 最近一次「入池批次」的传参快照（供「二次输入」重复上一次打出的牌所带的传参）。
+        /// 每次一次性抛多条传参前先 <see cref="BeginParamBatch"/> 清空，再逐条入池累积。
+        /// </summary>
+        public readonly List<ParamEntry> LastEntered = new();
+
         /// <summary>本场战斗打出的牌总数（供「零基启动」的迭代加成读取）。</summary>
         public int TotalPlays;
 
@@ -198,8 +204,15 @@ public sealed class AlphaCorePower : CustomPowerModel, IAddDumbVariablesToPowerD
     public void AddParam(ParamEntry entry)
     {
         Core.Params.Add(entry);
+        Core.LastEntered.Add(entry);
         InvokeDisplayAmountChanged();
     }
+
+    /// <summary>开始新的一批入池：清空「最近一次入池批次」的记录（供「二次输入」取用）。</summary>
+    public void BeginParamBatch() => Core.LastEntered.Clear();
+
+    /// <summary>最近一次入池批次的只读快照（「二次输入」重复上一次传参时读取）。</summary>
+    public IReadOnlyList<ParamEntry> LastEnteredParams => Core.LastEntered;
 
     /// <summary>
     /// 入池并广播「传参入池」事件（E18，供「终响激发」监听）。

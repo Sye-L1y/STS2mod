@@ -52,6 +52,7 @@ public sealed class ProtocolCorePower : CustomPowerModel, IAlphaProtocolListener
         AlphaCorePower? core = Owner.Player == null ? null : AlphaCorePower.Of(Owner.Player);
         if (core != null)
         {
+            core.BeginParamBatch();
             await core.AddParamWithHook(choiceContext, new ParamEntry
             {
                 Kind = ParamKind.GenerateCard,

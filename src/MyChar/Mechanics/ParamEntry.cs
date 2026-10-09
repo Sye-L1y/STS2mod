@@ -53,6 +53,12 @@ public enum ParamKind
     /// <summary>响应牌结算时获得 N 点格挡（「格挡置换」把去除的敌人格挡写进传参）。</summary>
     GainBlock,
 
+    /// <summary>
+    /// 响应牌本次结算**造成伤害时**，获得与伤害等量的格挡（「攻守兼备」）。
+    /// 在 <see cref="AlphaCard.AfterDamageGiven"/> 里累加本次打出的响应牌造成的伤害，打完一次性给格挡。
+    /// </summary>
+    BlockFromDamage,
+
     /// <summary>响应牌结算时，选择任意张手牌直接消耗（「冗余清理」；可不选、可多选）。</summary>
     ExhaustHand,
 
@@ -129,6 +135,7 @@ public sealed class ParamEntry
         ParamKind.ChooseClassCard => "从3张本职业稀有牌中选1张加入手牌",
         ParamKind.Gold => $"获得{Value:0}金币",
         ParamKind.GainBlock => $"获得{Value:0}点格挡",
+        ParamKind.BlockFromDamage => "响应牌造成伤害时获得等量格挡",
         ParamKind.ExhaustHand => "选择任意张手牌消耗",
         ParamKind.ReturnToHand => "响应牌结算后回到手牌",
         ParamKind.FreePlayRareCard => "从3张本职业稀有牌中选1张免费打出并消耗",

@@ -81,6 +81,15 @@ public abstract class AlphaCard : CustomCardModel
     /// </summary>
     private bool _returnToHandAfterPlay;
 
+    /// <summary>
+    /// 本牌本次结算消费到了「受伤回格挡」传参（<see cref="ParamKind.BlockFromDamage"/>）：
+    /// 在 <see cref="AfterDamageGiven"/> 里累加本牌造成的伤害，打完一次性换成等量格挡。
+    /// </summary>
+    private bool _gainBlockFromDamage;
+
+    /// <summary>本牌本次结算已造成的伤害合计（供「攻守兼备」传参换算格挡）。</summary>
+    private decimal _damageDealtThisPlay;
+
     /// <summary>本次打出时，响应是否真的消费到了传参（供「零基启动」判断是否回手）。每次打出刷新。</summary>
     protected bool ResponseConsumed { get; private set; }
 
@@ -267,6 +276,9 @@ public abstract class AlphaCard : CustomCardModel
         decimal boost = 1m;
         decimal damageBoost = 1m;
         decimal damageAdd = 0m;
+        // 每次打出都清掉上一次的「受伤回格挡」进度。
+        _gainBlockFromDamage = false;
+        _damageDealtThisPlay = 0m;
         // 「群伤」传参延后到本牌自身效果之后再结算（原因见下方响应阶段的注释）。
         var deferredGroupDamage = new List<ParamEntry>();
 
@@ -369,10 +381,25 @@ public abstract class AlphaCard : CustomCardModel
             await ApplyParam(choiceContext, cardPlay, entry);
         }
 
+        // 2.6) 「攻守兼备」传参：本牌本次造成的伤害全部换算成格挡（无伤害则不给）。
+        if (_gainBlockFromDamage)
+        {
+            _gainBlockFromDamage = false;
+            if (_damageDealtThisPlay > 0m)
+            {
+                await CreatureCmd.GainBlock(Owner.Creature, _damageDealtThisPlay, ValueProp.Move, cardPlay);
+            }
+            _damageDealtThisPlay = 0m;
+        }
+
         // 3) 传参：重新入池（在响应之后，才能自续）
         if (IsParamSource && core != null)
         {
-            foreach (ParamEntry newParam in BuildParams())
+            // 先材质化（BuildParams 可能读「最近一次入池批次」，必须先取好再开新批次），
+            // 再开新批次并逐条入池——「二次输入」要重复上一次的传参就靠这个批次记录。
+            List<ParamEntry> batch = BuildParams().ToList();
+            core.BeginParamBatch();
+            foreach (ParamEntry newParam in batch)
             {
                 await core.AddParamWithHook(choiceContext, newParam);
             }
@@ -518,6 +545,12 @@ public abstract class AlphaCard : CustomCardModel
         }
     }
 
+    /// <summary>
+    /// 本牌作为「传参来源」会抛出的条目（供「灵魂记忆」这类**不打出就触发其传参**的效果读取）。
+    /// 默认与 <see cref="BuildParams"/> 一致。
+    /// </summary>
+    internal IEnumerable<ParamEntry> ParamsForTrigger() => BuildParams();
+
     /// <summary>结算一条传参。</summary>
     protected virtual async Task ApplyParam(PlayerChoiceContext choiceContext, CardPlay cardPlay,
         ParamEntry entry)
@@ -590,11 +623,32 @@ public abstract class AlphaCard : CustomCardModel
                 await CreatureCmd.GainBlock(Owner.Creature, entry.Value, ValueProp.Move, cardPlay);
                 break;
 
+            case ParamKind.BlockFromDamage:
+                // 没有即时效果：打标记，本牌本次造成的伤害在 AfterDamageGiven 里累加，
+                // 打完一次性换算成等量格挡（见 OnPlay 的 2.6 步）。
+                _gainBlockFromDamage = true;
+                break;
+
             case ParamKind.ReturnToHand:
                 // 没有即时效果：只打标记，打完在 AfterCardPlayedLate 里把自己捞回手牌。
                 _returnToHandAfterPlay = true;
                 break;
         }
+    }
+
+    /// <summary>
+    /// 「攻守兼备」传参：本牌（响应牌）本次结算造成的伤害逐笔记账。
+    /// 只记「本牌自己打出的、且正在结算中」的伤害（<c>cardSource == this &amp;&amp; _resolving</c>），
+    /// 打完在 <see cref="OnPlay"/> 的 2.6 步一次性换成等量格挡。
+    /// </summary>
+    public override Task AfterDamageGiven(PlayerChoiceContext choiceContext, Creature? dealer,
+        DamageResult result, ValueProp props, Creature target, CardModel? cardSource)
+    {
+        if (_resolving && _gainBlockFromDamage && cardSource == this)
+        {
+            _damageDealtThisPlay += result.TotalDamage;
+        }
+        return base.AfterDamageGiven(choiceContext, dealer, result, props, target, cardSource);
     }
 
     /// <summary>
@@ -655,7 +709,7 @@ public abstract class AlphaCard : CustomCardModel
         Owner.Creature.CombatState?.HittableEnemies.Contains(creature) ?? false;
 
     /// <summary>随机挑一个可命中的敌人；没有敌人时返回 null。</summary>
-    private Creature? RandomEnemy()
+    protected Creature? RandomEnemy()
     {
         IReadOnlyList<Creature>? enemies = Owner.Creature.CombatState?.HittableEnemies;
         if (enemies == null || enemies.Count == 0)

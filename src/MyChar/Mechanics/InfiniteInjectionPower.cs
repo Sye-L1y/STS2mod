@@ -55,6 +55,8 @@ public sealed class InfiniteInjectionPower : CustomPowerModel, IAddDumbVariables
         {
             return;
         }
+        // 开新批次，让「二次输入」重复到的就是这一次注入的传参。
+        core.BeginParamBatch();
         await core.AddParamWithHook(choiceContext, new ParamEntry
         {
             Kind = ParamKind.GainProtocol,
