@@ -75,6 +75,12 @@ public abstract class AlphaCard : CustomCardModel
     /// <summary>是否正在结算本牌自身效果。用来区分「实战」（用本次吃到的增幅）与「预览」（用池里挂着的增幅）。</summary>
     private bool _resolving;
 
+    /// <summary>
+    /// 本牌本次结算消费到了「回手」传参（<see cref="ParamKind.ReturnToHand"/>）：
+    /// 打完在 <see cref="AfterCardPlayedLate"/> 里回到手牌。一次性，只对本次打出生效。
+    /// </summary>
+    private bool _returnToHandAfterPlay;
+
     /// <summary>本次打出时，响应是否真的消费到了传参（供「零基启动」判断是否回手）。每次打出刷新。</summary>
     protected bool ResponseConsumed { get; private set; }
 
@@ -273,7 +279,11 @@ public abstract class AlphaCard : CustomCardModel
                 active.AddRange(core.GetRetained(this));
             }
 
-            List<ParamEntry> entries = ConsumesParams ? core.ConsumeParams() : core.PeekParams();
+            // 「预输入」：池里真有传参要保时，这一次响应读而不取（池原样留给下一次）。
+            bool freeResponse = ConsumesParams && core.HasParams && core.TakeNextResponseFree();
+            List<ParamEntry> entries = ConsumesParams && !freeResponse
+                ? core.ConsumeParams()
+                : core.PeekParams();
             active.AddRange(entries);
 
             if (RetainsResponse && entries.Count > 0)
@@ -579,6 +589,30 @@ public abstract class AlphaCard : CustomCardModel
             case ParamKind.GainBlock:
                 await CreatureCmd.GainBlock(Owner.Creature, entry.Value, ValueProp.Move, cardPlay);
                 break;
+
+            case ParamKind.ReturnToHand:
+                // 没有即时效果：只打标记，打完在 AfterCardPlayedLate 里把自己捞回手牌。
+                _returnToHandAfterPlay = true;
+                break;
+        }
+    }
+
+    /// <summary>
+    /// 「回手」传参（<see cref="ParamKind.ReturnToHand"/>）：本次消费到它的牌**打完回到手牌**。
+    /// 与本体「本回合打出的牌回到手牌」类牌同口径——在 <c>AfterCardPlayedLate</c> 里看自己是不是已经不在手牌，
+    /// 不在就捞回来。只在「本牌自己被打出、且本次确实吃到回手传参」时生效，一次性。
+    /// </summary>
+    public override async Task AfterCardPlayedLate(PlayerChoiceContext choiceContext, CardPlay cardPlay)
+    {
+        await base.AfterCardPlayedLate(choiceContext, cardPlay);
+        if (!_returnToHandAfterPlay || cardPlay.Card != this)
+        {
+            return;
+        }
+        _returnToHandAfterPlay = false;
+        if (Pile?.Type != PileType.Hand)
+        {
+            await CardPileCmd.Add(this, PileType.Hand);
         }
     }
 

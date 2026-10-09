@@ -65,6 +65,9 @@ public sealed class AlphaCorePower : CustomPowerModel, IAddDumbVariablesToPowerD
         /// <summary>最近一次响应消费掉的传参（供「完全形态」随机返回一条）。</summary>
         public readonly List<ParamEntry> LastConsumed = new();
 
+        /// <summary>「预输入」：下一次响应**不消耗**传参（池原样保留）。只生效一次。</summary>
+        public bool NextResponseFree;
+
         /// <summary>本场战斗打出的牌总数（供「零基启动」的迭代加成读取）。</summary>
         public int TotalPlays;
 
@@ -227,6 +230,23 @@ public sealed class AlphaCorePower : CustomPowerModel, IAddDumbVariablesToPowerD
 
     /// <summary>只读快照（用于「不消耗传参」的响应，如继承迭代）。</summary>
     public List<ParamEntry> PeekParams() => new(Core.Params);
+
+    /// <summary>「预输入」：标记下一次响应不消耗传参。</summary>
+    public void SetNextResponseFree() => Core.NextResponseFree = true;
+
+    /// <summary>
+    /// 「预输入」：取用「下一次响应不消耗传参」的额度，取到即消耗（只生效一次）。
+    /// 池里没有传参时不会走到这里，额度会留到真正有传参可保的那次响应。
+    /// </summary>
+    public bool TakeNextResponseFree()
+    {
+        if (!Core.NextResponseFree)
+        {
+            return false;
+        }
+        Core.NextResponseFree = false;
+        return true;
+    }
 
     // ————————————————— 迭代 —————————————————
 

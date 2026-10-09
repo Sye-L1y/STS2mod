@@ -87,7 +87,7 @@ JOBS = [
     # —— 批次 1（v1.6） ——
     ("duospace_positioning", "复空间定位", SKILL),
     ("group_echo", "群响", ATTACK),
-    ("more_the_merrier", "多多益善", ATTACK),
+    ("more_the_merrier", "多多益善", SKILL),
     # —— 批次 2（v1.6） ——
     ("weakness_param", "弱点参数", SKILL),
     ("data_injection", "数据注入", ATTACK),
@@ -131,6 +131,10 @@ JOBS = [
     ("block_displacement", "格挡置换", SKILL),
     ("protocol_matrix", "协议矩阵", POWER),
     ("redundant_cleanup", "冗余清理", SKILL),
+    # —— 遗留牌第二批（v1.11 · 2026-10-09） ——
+    ("strike_test", "击打测试", ATTACK),
+    ("pre_input", "预输入", SKILL),
+    ("data_simulation", "数据模拟", ATTACK),
 ]
 
 

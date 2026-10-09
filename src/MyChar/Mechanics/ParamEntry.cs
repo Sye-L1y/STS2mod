@@ -56,6 +56,12 @@ public enum ParamKind
     /// <summary>响应牌结算时，选择任意张手牌直接消耗（「冗余清理」；可不选、可多选）。</summary>
     ExhaustHand,
 
+    /// <summary>
+    /// 响应牌本次结算后**回到手牌**（「击打测试」的传参）。一次性：消费它的响应牌打完回手，
+    /// 条目本身随池清空消失，不写在牌上（见 <see cref="AlphaCard"/> 的 AfterCardPlayedLate）。
+    /// </summary>
+    ReturnToHand,
+
     /// <summary>从 3 张本职业稀有牌中选 1 张，免费打出并消耗（「特别参数」药水写入的传参）。</summary>
     FreePlayRareCard,
 }
@@ -124,6 +130,7 @@ public sealed class ParamEntry
         ParamKind.Gold => $"获得{Value:0}金币",
         ParamKind.GainBlock => $"获得{Value:0}点格挡",
         ParamKind.ExhaustHand => "选择任意张手牌消耗",
+        ParamKind.ReturnToHand => "响应牌结算后回到手牌",
         ParamKind.FreePlayRareCard => "从3张本职业稀有牌中选1张免费打出并消耗",
         ParamKind.GenerateCard => Variant switch
         {
