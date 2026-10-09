@@ -12,7 +12,7 @@ using MyCharMod.Mechanics;
 namespace MyCharMod;
 
 /// <summary>
-/// 罕见技能「复空间定位」：获得 8 格挡；本回合受到攻击时，对所有敌人造成 2（3）伤。
+/// 罕见技能「复空间定位」：获得 8 格挡；本回合受到攻击时，对所有敌人造成 2（升级 4）伤。
 /// 反击由 <see cref="DuospacePositioningPower"/> 承载，回合结束移除。
 /// </summary>
 [Pool(typeof(MyCharCardPool))]
@@ -43,5 +43,5 @@ public sealed class DuospacePositioning : AlphaCard
             ResolveValue("Retaliate"), Owner.Creature, this);
     }
 
-    protected override void OnUpgrade() => DynamicVars["Retaliate"].UpgradeValueBy(1m);
+    protected override void OnUpgrade() => DynamicVars["Retaliate"].UpgradeValueBy(2m);
 }

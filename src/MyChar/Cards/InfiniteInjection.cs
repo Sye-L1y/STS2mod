@@ -34,4 +34,8 @@ public sealed class InfiniteInjection : AlphaCard
     {
         await PowerCmd.Apply<InfiniteInjectionPower>(choiceContext, Owner.Creature, 1m, Owner.Creature, this);
     }
+
+    // 固有走 AddKeyword：BaseKeywords 依赖 IsUpgraded 时，LocalKeywords 会在升级前就被缓存成不含固有的集合，
+    // 升级后不会刷新（见 CardModel.LocalKeywords）。
+    protected override void OnUpgrade() => AddKeyword(CardKeyword.Innate);
 }

@@ -40,9 +40,6 @@ JOBS = [
     ("energy_icon.png", "ui/energy_text.png", 24, 24, "alpha"),
     ("card_strike.jpg", "cards/strike.png", *CARD, "crop"),
     ("card_defend.jpg", "cards/defend.png", *CARD, "crop"),
-    ("card_blast.jpg", "cards/blast.png", *CARD, "crop"),
-    ("card_ward.jpg", "cards/ward.png", *CARD, "crop"),
-    ("card_signature.jpg", "cards/signature.png", *CARD, "crop"),
     ("relic_ember_heart.jpg", "relics/ember_heart.png", 256, 256, "cut"),
     ("relic_old_anchor.jpg", "relics/old_anchor.png", 256, 256, "cut"),
     # 药水：源图自带透明通道，本体大图 256x256；局内槽位按 keep-aspect 缩到 60x60，

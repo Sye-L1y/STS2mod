@@ -28,7 +28,7 @@ public sealed class RedundantCleanup : AlphaCard
         new DynamicVar("Pick", 2m),
     };
 
-    public override string? CustomPortraitPath => MyCharAssets.Card("cache_refresh");
+    public override string? CustomPortraitPath => MyCharAssets.Card("redundant_cleanup");
 
     public override List<(string, string)>? Localization => new CardLoc(
         "冗余清理",

@@ -22,7 +22,7 @@ public sealed class BlockDisplacement : AlphaCard
     /// <summary>本牌本次去除的敌人格挡量，供 <see cref="BuildParam"/> 写入传参。</summary>
     private decimal _removedBlock;
 
-    public override string? CustomPortraitPath => MyCharAssets.Card("protocol_bulwark");
+    public override string? CustomPortraitPath => MyCharAssets.Card("block_displacement");
 
     public override List<(string, string)>? Localization => new CardLoc(
         "格挡置换",

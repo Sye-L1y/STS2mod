@@ -27,7 +27,7 @@ public sealed class ElegantFormula : AlphaCard
         new DynamicVar("Threshold", 3m),
     };
 
-    public override string? CustomPortraitPath => MyCharAssets.Card("condense_qi");
+    public override string? CustomPortraitPath => MyCharAssets.Card("elegant_formula");
 
     public override List<(string, string)>? Localization => new CardLoc(
         "优美公式",

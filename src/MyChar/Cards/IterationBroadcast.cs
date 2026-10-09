@@ -28,7 +28,7 @@ public sealed class IterationBroadcast : AlphaCard
         new DynamicVar("IterEvery", 3m),
     };
 
-    public override string? CustomPortraitPath => MyCharAssets.Card("param_iteration");
+    public override string? CustomPortraitPath => MyCharAssets.Card("iteration_broadcast");
 
     public override List<(string, string)>? Localization => new CardLoc(
         "高阶洞察",

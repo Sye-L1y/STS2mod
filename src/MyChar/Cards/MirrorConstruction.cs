@@ -25,7 +25,7 @@ public sealed class MirrorConstruction : AlphaCard
         new DynamicVar("Copy", 1m),
     };
 
-    public override string? CustomPortraitPath => MyCharAssets.Card("double_reconstruct");
+    public override string? CustomPortraitPath => MyCharAssets.Card("mirror_construction");
 
     public override List<(string, string)>? Localization => new CardLoc(
         "镜像构建",

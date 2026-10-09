@@ -26,7 +26,7 @@ public sealed class DisasterHabit : AlphaCard
         new AlphaDamageVar(18m, ValueProp.Move),
     };
 
-    public override string? CustomPortraitPath => MyCharAssets.Card("point_execution");
+    public override string? CustomPortraitPath => MyCharAssets.Card("disaster_habit");
 
     public override List<(string, string)>? Localization => new CardLoc(
         "灾难习性",

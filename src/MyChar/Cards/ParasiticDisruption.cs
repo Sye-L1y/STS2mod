@@ -36,7 +36,7 @@ public sealed class ParasiticDisruption : AlphaCard
         new DynamicVar("IterGain", 1m),
     };
 
-    public override string? CustomPortraitPath => MyCharAssets.Card("infiltration");
+    public override string? CustomPortraitPath => MyCharAssets.Card("parasitic_disruption");
 
     public override List<(string, string)>? Localization => new CardLoc(
         "寄生扰乱",

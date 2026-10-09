@@ -41,7 +41,7 @@ public sealed class ParameterTuning : AlphaCard
         return base.IterationBonusFor(varName);
     }
 
-    public override string? CustomPortraitPath => MyCharAssets.Card("param_activation");
+    public override string? CustomPortraitPath => MyCharAssets.Card("parameter_tuning");
 
     public override List<(string, string)>? Localization => new CardLoc(
         "调参",

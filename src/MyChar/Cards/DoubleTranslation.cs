@@ -30,7 +30,7 @@ public sealed class DoubleTranslation : AlphaCard
         new AlphaDamageVar(8m, ValueProp.Move),
     };
 
-    public override string? CustomPortraitPath => MyCharAssets.Card("double_reconstruct");
+    public override string? CustomPortraitPath => MyCharAssets.Card("double_translation");
 
     public override List<(string, string)>? Localization => new CardLoc(
         "双重译制",

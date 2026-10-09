@@ -30,7 +30,7 @@ public sealed class ProtocolMatrix : AlphaCard
         new DynamicVar("GammaDamage", 15m),
     };
 
-    public override string? CustomPortraitPath => MyCharAssets.Card("protocol_resonance");
+    public override string? CustomPortraitPath => MyCharAssets.Card("protocol_matrix");
 
     public override List<(string, string)>? Localization => new CardLoc(
         "协议矩阵",

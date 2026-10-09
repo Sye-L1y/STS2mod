@@ -18,7 +18,7 @@ public sealed class ProtocolCore : AlphaCard
 {
     protected override IEnumerable<CardKeyword> BaseKeywords => new[] { CardKeyword.Ethereal };
 
-    public override string? CustomPortraitPath => MyCharAssets.Card("protocol_cohesion");
+    public override string? CustomPortraitPath => MyCharAssets.Card("protocol_core");
 
     public override List<(string, string)>? Localization => new CardLoc(
         "协议核心",

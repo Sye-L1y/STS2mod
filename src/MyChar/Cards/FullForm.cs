@@ -23,7 +23,7 @@ public sealed class FullForm : AlphaCard
 
     public override List<(string, string)>? Localization => new CardLoc(
         "完全形态",
-        "迭代牌完成[gold]迭代[/gold]时，所有迭代牌计数+1（每份各+1，每回合一次）。\n响应牌触发[gold]响应[/gold]时，随机返还本次消耗的[gold]传参[/gold]。",
+        "迭代牌完成[gold]迭代[/gold]时，所有迭代牌计数+1（每回合一次）。\n响应牌触发[gold]响应[/gold]时，随机返还本次消耗的[gold]传参[/gold]。",
         ("flavor", "当所有回路同时闭合，它就成了完整的自己。"));
 
     public FullForm()

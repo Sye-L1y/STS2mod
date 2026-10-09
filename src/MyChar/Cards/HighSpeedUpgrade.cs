@@ -22,7 +22,7 @@ public sealed class HighSpeedUpgrade : AlphaCard
         new DynamicVar("Count", 1m),
     };
 
-    public override string? CustomPortraitPath => MyCharAssets.Card("fast_iteration");
+    public override string? CustomPortraitPath => MyCharAssets.Card("high_speed_upgrade");
 
     public override List<(string, string)>? Localization => new CardLoc(
         "高速升级",

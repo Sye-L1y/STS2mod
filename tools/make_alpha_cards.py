@@ -46,7 +46,7 @@ JOBS = [
     ("direct_hit", "正击", ATTACK),
     ("disparity_count", "悬殊计数", SKILL),
     ("param_gather", "参数采集", SKILL),
-    ("quick_search", "快速检索", SKILL),
+    ("quick_search", "速检激发", SKILL),
     ("cache_refresh", "缓存刷新", SKILL),
     ("protocol_sample", "协议采样", PROTO),
     ("recursive_practice", "递归练习", SKILL),
@@ -58,8 +58,7 @@ JOBS = [
     ("protocol_cohesion", "协议凝聚", PROTO),
     ("condense_qi", "凝神聚气", SKILL),
     ("protocol_iteration", "协议迭代", PROTO),
-    ("param_iteration", "传参迭代", ATTACK),
-    ("protocol_response", "协议响应", ATTACK),
+    ("protocol_response", "协议发掘", SKILL),
     ("call", "调用", SKILL),
     ("data_collection", "数据收集", ATTACK),
     ("warmup_loop", "预热循环", SKILL),
@@ -114,6 +113,24 @@ JOBS = [
     ("pipeline", "流水线", POWER),
     ("infinite_injection", "无限注入", POWER),
     ("battle_preset", "战斗预设", ATTACK),
+    # —— 卡图错配修正（v1.9 第十六轮 · 2026-10-09） ——
+    # 以下卡此前 CustomPortraitPath 复用了别的卡的占位图（卡面上写着别人的卡名）；
+    # 本轮各补一张自己的图，并把代码指向新 slug。旧图若仍被原卡使用则保留。
+    ("parameter_tuning", "调参", ATTACK),
+    ("target_feedback", "目标回馈", ATTACK),
+    ("mirror_construction", "镜像构建", SKILL),
+    ("iteration_broadcast", "高阶洞察", POWER),
+    ("high_speed_upgrade", "高速升级", SKILL),
+    ("elegant_formula", "优美公式", POWER),
+    ("protocol_core", "协议核心", POWER),
+    ("final_echo_stimulus", "终响激发", POWER),
+    ("parasitic_disruption", "寄生扰乱", SKILL),
+    ("gradient_regression", "梯度回归", POWER),
+    ("double_translation", "双重译制", ATTACK),
+    ("disaster_habit", "灾难习性", ATTACK),
+    ("block_displacement", "格挡置换", SKILL),
+    ("protocol_matrix", "协议矩阵", POWER),
+    ("redundant_cleanup", "冗余清理", SKILL),
 ]
 
 

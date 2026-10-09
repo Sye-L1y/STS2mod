@@ -28,7 +28,7 @@ public sealed class TargetFeedback : AlphaCard
         new AlphaDamageVar(1m, ValueProp.Move),
     };
 
-    public override string? CustomPortraitPath => MyCharAssets.Card("foreshadow");
+    public override string? CustomPortraitPath => MyCharAssets.Card("target_feedback");
 
     public override List<(string, string)>? Localization => new CardLoc(
         "目标回馈",

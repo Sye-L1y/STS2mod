@@ -23,7 +23,7 @@ public sealed class FinalEchoStimulus : AlphaCard
         new DynamicVar("Doom", 5m),
     };
 
-    public override string? CustomPortraitPath => MyCharAssets.Card("group_echo");
+    public override string? CustomPortraitPath => MyCharAssets.Card("final_echo_stimulus");
 
     public override List<(string, string)>? Localization => new CardLoc(
         "终响激发",

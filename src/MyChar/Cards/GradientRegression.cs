@@ -22,7 +22,7 @@ public sealed class GradientRegression : AlphaCard
         new DynamicVar("Factor", 3m),
     };
 
-    public override string? CustomPortraitPath => MyCharAssets.Card("param_gather");
+    public override string? CustomPortraitPath => MyCharAssets.Card("gradient_regression");
 
     public override List<(string, string)>? Localization => new CardLoc(
         "梯度回归",
