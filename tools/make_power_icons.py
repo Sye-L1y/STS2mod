@@ -36,6 +36,10 @@ JOBS = [
     # —— 补漏（v1.9 反馈） ——
     # 「紧急护壁」的封锁 Power：原来引用 no_attack.png，该图从未生成。
     ("no_attack", (198, 96, 88)),
+    # —— 遗留牌补做（v1.9 第十五轮） ——
+    ("inertia", (120, 196, 150)),
+    ("pipeline", (150, 170, 210)),
+    ("infinite_injection", (176, 128, 214)),
 ]
 
 
@@ -145,6 +149,9 @@ def main() -> None:
         "personality_training": draw_protocol,
         "fast_iteration": draw_protocol,
         "no_attack": draw_no_attack,
+        "inertia": draw_protocol,
+        "pipeline": draw_protocol,
+        "infinite_injection": draw_protocol,
     }
     for stem, accent in JOBS:
         img = drawers[stem](accent)

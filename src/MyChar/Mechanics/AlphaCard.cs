@@ -360,9 +360,12 @@ public abstract class AlphaCard : CustomCardModel
         }
 
         // 3) 传参：重新入池（在响应之后，才能自续）
-        if (IsParamSource && core != null && BuildParam() is { } newParam)
+        if (IsParamSource && core != null)
         {
-            await core.AddParamWithHook(choiceContext, newParam);
+            foreach (ParamEntry newParam in BuildParams())
+            {
+                await core.AddParamWithHook(choiceContext, newParam);
+            }
         }
 
         // 4) 迭代：记一次打出，并把「已达档位但还没结算过」的迭代完成全部补上。
@@ -492,6 +495,18 @@ public abstract class AlphaCard : CustomCardModel
 
     /// <summary>打出时加入传参池的条目；不带传参返回 null。</summary>
     protected virtual ParamEntry? BuildParam() => null;
+
+    /// <summary>
+    /// 打出时加入传参池的全部条目（默认只产出 <see cref="BuildParam"/> 的那一条）。
+    /// 一条牌要写成多条传参（如「双通道」的「抽1张」+「回复2生命」）时 override 它。
+    /// </summary>
+    protected virtual IEnumerable<ParamEntry> BuildParams()
+    {
+        if (BuildParam() is { } single)
+        {
+            yield return single;
+        }
+    }
 
     /// <summary>结算一条传参。</summary>
     protected virtual async Task ApplyParam(PlayerChoiceContext choiceContext, CardPlay cardPlay,

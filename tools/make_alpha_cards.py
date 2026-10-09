@@ -108,6 +108,12 @@ JOBS = [
     # BaseLib 的 CustomCardPortraitPath 在 ResourceLoader.Load 返回 null 后取 .ResourcePath，
     # 直接抛 NullReferenceException 并中断 ModelDb.Preload 的整段卡面预加载。
     ("calamity_coverage", "厄难覆盖", POWER),
+    # —— 遗留牌补做（v1.9 第十五轮） ——
+    ("dual_channel", "双通道", SKILL),
+    ("inertia", "惯性", POWER),
+    ("pipeline", "流水线", POWER),
+    ("infinite_injection", "无限注入", POWER),
+    ("battle_preset", "战斗预设", ATTACK),
 ]
 
 
