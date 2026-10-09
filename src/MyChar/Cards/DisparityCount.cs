@@ -48,9 +48,9 @@ public sealed class DisparityCount : AlphaCard
         }
     }
 
-    /// <summary>既不带迭代也不带响应 = 和核心机制没有联动。</summary>
+    /// <summary>既不带迭代也不带响应 = 和核心机制没有联动（「语义附加」临时授予的响应也算，故用 HasResponse）。</summary>
     private static bool IsDisparate(CardModel card) =>
-        card is not AlphaCard alpha || (!alpha.IsResponse && alpha.IterationEvery <= 0);
+        card is not AlphaCard alpha || (!alpha.HasResponse && alpha.IterationEvery <= 0);
 
     protected override void OnUpgrade()
     {

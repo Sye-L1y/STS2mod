@@ -142,6 +142,9 @@ JOBS = [
     ("second_input", "二次输入", ATTACK),
     ("multi_layer_output", "多层网络输出", ATTACK),
     ("soul_memory", "灵魂记忆", SKILL),
+    # —— 遗留牌第四批（v1.13 · 2026-10-09） ——
+    ("adjustment", "调节", POWER),
+    ("semantic_attach", "语义附加", SKILL),
 ]
 
 

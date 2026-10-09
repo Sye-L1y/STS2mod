@@ -108,8 +108,22 @@ public abstract class AlphaCard : CustomCardModel
     {
     }
 
-    /// <summary>是否带「响应」：打出时消费传参池。池空也能打出，只是没有加成。</summary>
+    /// <summary>是否**天生**带「响应」：打出时消费传参池。池空也能打出，只是没有加成。</summary>
     public virtual bool IsResponse => false;
+
+    /// <summary>
+    /// 本场战斗里由「语义附加」临时授予的「响应」（不写回卡牌本体：战斗结束牌回牌组即失效）。
+    /// </summary>
+    private bool _grantedResponse;
+
+    /// <summary>
+    /// **实际**是否带「响应」= 天生带（<see cref="IsResponse"/>）或本场被「语义附加」授予。
+    /// 所有机制判断（消费传参 / 关键词显示 / 卡面预览）都读这个，不要直接读 <see cref="IsResponse"/>。
+    /// </summary>
+    public bool HasResponse => IsResponse || _grantedResponse;
+
+    /// <summary>「语义附加」用：让这张牌本场战斗内获得「响应」。</summary>
+    public void GrantResponse() => _grantedResponse = true;
 
     /// <summary>是否带「传参」：打出时向池里加入一条传参。</summary>
     public virtual bool IsParamSource => false;
@@ -186,7 +200,8 @@ public abstract class AlphaCard : CustomCardModel
             {
                 yield return AlphaKeywords.ParamPassing;
             }
-            if (IsResponse)
+            // 被「语义附加」授予响应的牌，卡面同样挂上「响应」词条。
+            if (HasResponse)
             {
                 yield return AlphaKeywords.Response;
             }
@@ -282,8 +297,8 @@ public abstract class AlphaCard : CustomCardModel
         // 「群伤」传参延后到本牌自身效果之后再结算（原因见下方响应阶段的注释）。
         var deferredGroupDamage = new List<ParamEntry>();
 
-        // 1) 响应
-        if (IsResponse && core != null)
+        // 1) 响应（HasResponse 含「语义附加」临时授予的响应）
+        if (HasResponse && core != null)
         {
             var active = new List<ParamEntry>();
             if (RetainsResponse)
@@ -457,7 +472,7 @@ public abstract class AlphaCard : CustomCardModel
 
     /// <summary>卡面预览用的平伤加成 = 池里挂着的 DamageAdd 之和（只有响应牌才算，受伤害类传参倍率放大）。</summary>
     private decimal PreviewDamageAddFor() =>
-        IsResponse ? (AlphaCorePower.Of(this)?.ParamDamageAdd ?? 0m) * DamageParamMultiplier : 0m;
+        HasResponse ? (AlphaCorePower.Of(this)?.ParamDamageAdd ?? 0m) * DamageParamMultiplier : 0m;
 
     /// <summary>本牌「格挡」的原始值，口径同 <see cref="RawDamage"/>（α协议增幅对格挡也生效）。</summary>
     internal decimal RawBlock()
@@ -506,7 +521,7 @@ public abstract class AlphaCard : CustomCardModel
     /// </summary>
     public decimal PreviewBoostFor(string varName)
     {
-        if (!IsResponse)
+        if (!HasResponse)
         {
             return 1m;
         }
@@ -656,15 +671,30 @@ public abstract class AlphaCard : CustomCardModel
     /// 与本体「本回合打出的牌回到手牌」类牌同口径——在 <c>AfterCardPlayedLate</c> 里看自己是不是已经不在手牌，
     /// 不在就捞回来。只在「本牌自己被打出、且本次确实吃到回手传参」时生效，一次性。
     /// </summary>
+    /// <summary>
+    /// 打完一张牌之后的收尾（此处在引擎把打出的牌移出「出牌区」<b>之后</b>触发，捞回手牌必须在这个时机）：
+    ///   ① 「回手」传参（<see cref="ParamKind.ReturnToHand"/>）：本次消费到它的牌回手，一次性。
+    ///   ② 「调节」Power：本回合**第一次**打出[gold]迭代[/gold]牌时该牌回手（所有迭代牌共用一次额度）。
+    /// 两者都只在「本牌自己被打出」时生效，且回手前都会先把标记消费掉（不会重复触发）。
+    /// </summary>
     public override async Task AfterCardPlayedLate(PlayerChoiceContext choiceContext, CardPlay cardPlay)
     {
         await base.AfterCardPlayedLate(choiceContext, cardPlay);
-        if (!_returnToHandAfterPlay || cardPlay.Card != this)
+        if (cardPlay.Card != this)
         {
             return;
         }
+
+        bool returnToHand = _returnToHandAfterPlay;
         _returnToHandAfterPlay = false;
-        if (Pile?.Type != PileType.Hand)
+
+        // 「调节」额度由 Power 记：本回合没用过才回手，用过就不再回（防「回手 → 再打出 → 再回手」死循环）。
+        if (IterationEvery > 0 && AdjustmentPower.TryConsumeTurnSlot(Owner))
+        {
+            returnToHand = true;
+        }
+
+        if (returnToHand && Pile?.Type != PileType.Hand)
         {
             await CardPileCmd.Add(this, PileType.Hand);
         }

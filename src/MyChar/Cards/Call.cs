@@ -59,10 +59,10 @@ public sealed class Call : AlphaCard
         }
     }
 
-    /// <summary>带任一核心机制的牌 = 值得调用。</summary>
+    /// <summary>带任一核心机制的牌 = 值得调用（「语义附加」临时授予的响应也算，故用 HasResponse）。</summary>
     private static bool IsLinked(CardModel card) =>
         card is AlphaCard alpha &&
-        (alpha.IsParamSource || alpha.IsResponse || alpha.IterationEvery > 0 || alpha.GrantsProtocol);
+        (alpha.IsParamSource || alpha.HasResponse || alpha.IterationEvery > 0 || alpha.GrantsProtocol);
 
     protected override void OnUpgrade()
     {

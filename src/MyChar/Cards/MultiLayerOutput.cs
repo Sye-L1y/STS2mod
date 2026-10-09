@@ -40,7 +40,7 @@ public sealed class MultiLayerOutput : AlphaCard
 
     public override List<(string, string)>? Localization => new CardLoc(
         "多层网络输出",
-        "造成{Damage:diff()}点伤害X次。\n[gold]响应[/gold]。若击杀敌人，战斗结束后随机升级一张牌。",
+        "造成{Damage:diff()}点伤害X次。\n[gold]响应[/gold]。若击杀敌人，战斗结束后随机升级一张牌（每场战斗一次）。",
         ("flavor", "最后一层不再收敛，直接把结果全部推出去。"));
 
     public MultiLayerOutput()
