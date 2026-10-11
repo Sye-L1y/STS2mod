@@ -107,3 +107,6 @@
 - ★ bash 里**不能** `powershell -File ...`（被安全策略拦截）→ PowerShell 脚本只能用 PowerShell 工具跑。游戏日志在 `%APPDATA%\SlayTheSpire2\logs\godot.log`。
 - **定位编译错误最快**：`dotnet build src/MyChar/MyChar.csproj -c Release -v minimal` 看尾部 30 行。
 - git 开 `core.autocrlf=true`；`.tscn` 按原始字节打进 pck，`.gitattributes` 锁 `*.tscn text eol=lf`。
+- ★ **AI 环境内无法 `git push` / `git fetch`**（2026-10-11 实测）：工具进程带 `HTTP_PROXY=HTTPS_PROXY=http://127.0.0.1:57431`（环境注入的出口代理），该代理对 `github.com` 的 CONNECT 返回 **`502 CONNECT tunnel failed`**；清空代理走直连则 **443 无路由**。→ **提交/整理可在环境内完成，`git push` 必须由用户在本机终端执行**。
+- ★ 本环境**删除文件会走回收站包装器**（`safe-delete`），`Remove-Item` 常报错退出码 1，但文件实际已移入回收站 → 批量删除要 `try { Remove-Item -LiteralPath $t -Force -ErrorAction Stop } catch {}` 逐项包住再回读校验。
+- 远端：`https://github.com/Sye-L1y/STS2mod.git`（分支 `master`）。
