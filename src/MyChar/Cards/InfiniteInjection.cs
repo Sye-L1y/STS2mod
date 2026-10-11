@@ -10,14 +10,13 @@ using MyCharMod.Mechanics;
 namespace MyCharMod;
 
 /// <summary>
-/// 罕见能力「无限注入」：（固有）每回合开始时，[gold]传参[/gold]：获得 1 层[gold]协议[/gold]。
+/// 罕见能力「无限注入」：每回合开始时，[gold]传参[/gold]：获得 1 层[gold]协议[/gold]。
 /// 由 <see cref="InfiniteInjectionPower"/> 承载（走 <c>AddParamWithHook</c> 入池，E18 监听者照常触发）。2 费。
+/// 「固有」是**升级后**才有的（<see cref="OnUpgrade"/> 里 <c>AddKeyword</c>）；挂上关键词后卡面词条由引擎自动生成。
 /// </summary>
 [Pool(typeof(MyCharCardPool))]
 public sealed class InfiniteInjection : AlphaCard
 {
-    protected override IEnumerable<CardKeyword> BaseKeywords => new[] { CardKeyword.Innate };
-
     public override string? CustomPortraitPath => MyCharAssets.Card("infinite_injection");
 
     public override List<(string, string)>? Localization => new CardLoc(

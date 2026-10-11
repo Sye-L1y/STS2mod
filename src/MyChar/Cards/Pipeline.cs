@@ -10,14 +10,13 @@ using MyCharMod.Mechanics;
 namespace MyCharMod;
 
 /// <summary>
-/// 罕见能力「流水线」：（固有）每回合开始时额外抽 1 张牌，同时手牌上限 −1。
+/// 罕见能力「流水线」：每回合开始时额外抽 1 张牌，同时手牌上限 −1。
 /// 由 <see cref="PipelinePower"/> 承载（含 <c>IMaxHandSizeModifier</c> 手牌上限钩子）。0 费。
+/// 「固有」是**升级后**才有的（<see cref="OnUpgrade"/> 里 <c>AddKeyword</c>）；挂上关键词后卡面词条由引擎自动生成。
 /// </summary>
 [Pool(typeof(MyCharCardPool))]
 public sealed class Pipeline : AlphaCard
 {
-    protected override IEnumerable<CardKeyword> BaseKeywords => new[] { CardKeyword.Innate };
-
     public override string? CustomPortraitPath => MyCharAssets.Card("pipeline");
 
     public override List<(string, string)>? Localization => new CardLoc(

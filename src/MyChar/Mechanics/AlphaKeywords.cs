@@ -4,7 +4,7 @@ using MegaCrit.Sts2.Core.Entities.Cards;
 namespace MyCharMod.Mechanics;
 
 /// <summary>
-/// 阿尔法机的四个自定义关键词。
+/// 阿尔法的四个自定义关键词。
 ///
 /// BaseLib 在 ModelDb.Init 时扫描带 [CustomEnum] 的静态字段，给它们分配运行时枚举值，
 /// 并把「关键词 key」记进 CustomKeywords.KeywordIDs。key = 命名空间根 + '-' + 字段名大写：

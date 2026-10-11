@@ -17,7 +17,7 @@ namespace MyCharMod;
 ///
 /// 授予是**本场战斗**内的（只挂在手牌的那个卡牌实例上，战斗结束牌回牌组即自然失效），
 /// 不写回牌组实体。判定统一走 <see cref="AlphaCard.HasResponse"/>（= 天生带响应或本场被授予）。
-/// 只对**阿尔法机自己的牌**开放（<see cref="AlphaCard"/> 之外的牌没有传参池可消费，给了响应也没意义）。
+/// 只对**阿尔法自己的牌**开放（<see cref="AlphaCard"/> 之外的牌没有传参池可消费，给了响应也没意义）。
 /// 1 费，升级减费（1 → 0）。
 /// </summary>
 [Pool(typeof(MyCharCardPool))]
@@ -55,7 +55,7 @@ public sealed class SemanticAttach : AlphaCard
         }
     }
 
-    /// <summary>可作为目标的牌：自己的、本场还没有响应的阿尔法机牌（不含本牌自己）。</summary>
+    /// <summary>可作为目标的牌：自己的、本场还没有响应的阿尔法牌（不含本牌自己）。</summary>
     private bool IsAttachable(CardModel card) =>
         card != this && card is AlphaCard alpha && !alpha.HasResponse;
 

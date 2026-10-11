@@ -3,6 +3,7 @@ using BaseLib.Patches.UI;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Logging;
 using MegaCrit.Sts2.Core.Modding;
+using MegaCrit.Sts2.Core.Models;
 
 namespace MyCharMod;
 
@@ -29,24 +30,27 @@ public static class ModEntry
 
     /// <summary>
     /// 遗物图标没有像角色/卡牌那样的 override 点，BaseLib 提供了 RelicImageOverridePatch 注册表。
-    /// RelicIconData(图鉴大图, 局内小图标, 描边图) —— 暂时三格都用同一张 256x256 占位图。
+    /// RelicIconData(图鉴大图, 局内小图标, 描边图) —— 三格都用同一张 256x256 真图标。
     /// 注册要发生在图标第一次被加载之前，所以放在 Initialize 里。
+    /// 图标源图见 .artwork/遗物/，由 tools/make_assets.py 处理成 256² 输出。
     /// </summary>
     private static void RegisterRelicIcons()
     {
-        string ember = MyCharAssets.Relic("ember_heart");
-        RelicImageOverridePatch.AddOverride<MyCharStarterRelic>(new RelicIconData(ember, ember, ember));
-        RelicImageOverridePatch.AddOverride<MyCharStarterRelicAncient>(new RelicIconData(ember, ember, ember));
+        // 九个遗物各自一张真图标（2026-10-11 接入，替代 ember_heart / old_anchor 占位）。
+        AddRelicIcon<MyCharStarterRelic>("alpha_chip");           // 起始遗物「阿尔法芯片」
+        AddRelicIcon<MyCharStarterRelicAncient>("gamma_chip");    // 先古版「伽马芯片」
+        AddRelicIcon<MyCharRelicAccelerator>("accelerator");
+        AddRelicIcon<MyCharRelicAccumulation>("accumulation");
+        AddRelicIcon<MyCharRelicEnsemble>("ensemble");
+        AddRelicIcon<MyCharRelicResponseFeedback>("response_feedback");
+        AddRelicIcon<MyCharRelicOmegaProtocol>("omega_protocol");
+        AddRelicIcon<MyCharRelicPreProtocol>("pre_protocol");
+        AddRelicIcon<MyCharRelicSuperStart>("super_start");
+    }
 
-        // 本轮新增的 7 个专属遗物：真图标待补，先统一复用 old_anchor 占位。
-        string placeholder = MyCharAssets.Relic("old_anchor");
-        var icon = new RelicIconData(placeholder, placeholder, placeholder);
-        RelicImageOverridePatch.AddOverride<MyCharRelicResponseFeedback>(icon);
-        RelicImageOverridePatch.AddOverride<MyCharRelicAccelerator>(icon);
-        RelicImageOverridePatch.AddOverride<MyCharRelicPreProtocol>(icon);
-        RelicImageOverridePatch.AddOverride<MyCharRelicOmegaProtocol>(icon);
-        RelicImageOverridePatch.AddOverride<MyCharRelicAccumulation>(icon);
-        RelicImageOverridePatch.AddOverride<MyCharRelicEnsemble>(icon);
-        RelicImageOverridePatch.AddOverride<MyCharRelicSuperStart>(icon);
+    private static void AddRelicIcon<TRelic>(string pngName) where TRelic : RelicModel
+    {
+        string path = MyCharAssets.Relic(pngName);
+        RelicImageOverridePatch.AddOverride<TRelic>(new RelicIconData(path, path, path));
     }
 }

@@ -11,7 +11,7 @@ using MegaCrit.Sts2.Core.ValueProps;
 namespace MyCharMod.Mechanics;
 
 /// <summary>
-/// 阿尔法机的伤害变量。卡面预览与实际结算走**同一条口径**：
+/// 阿尔法的伤害变量。卡面预览与实际结算走**同一条口径**：
 ///   原始值 = floor((基础值 + 迭代成长) × 传参增幅)   ← 见 <see cref="AlphaCard.RawDamage"/>
 ///   最终值 = Hook.ModifyDamage(原始值)                ← 力量 / 活力等由引擎在这一步加上
 /// 预览走 <c>Hook.ModifyDamage</c>，实战的 <c>CreatureCmd.Damage</c> 也走 <c>Hook.ModifyDamage</c>，
@@ -53,7 +53,7 @@ internal sealed class AlphaDamageVar : DamageVar
 }
 
 /// <summary>
-/// 阿尔法机的格挡变量，与 <see cref="AlphaDamageVar"/> 同理：
+/// 阿尔法的格挡变量，与 <see cref="AlphaDamageVar"/> 同理：
 /// 预览 = <c>Hook.ModifyBlock</c>(原始值)，实战 <c>CreatureCmd.GainBlock</c> 也走 <c>Hook.ModifyBlock</c>，两者一致。
 /// </summary>
 internal sealed class AlphaBlockVar : BlockVar

@@ -1,0 +1,18 @@
+{
+  "id": "MyChar",
+  "name": "阿尔法",
+  "author": "TODO",
+  "description": "新增可玩角色「阿尔法」：蓄力 → 连锁 → 爆发的成长型角色，含独立卡池、起始卡组、遗物池与药水池。\n三大核心机制——传参 / 响应（传参牌往池里塞效果，响应牌打出时消费整池结算）、协议（回合开始按层数档位发放 α / β / γ 协议牌）、迭代（每打出若干次叠一层效果，本场战斗永久成长）。",
+  "version": "0.1.0",
+  "has_dll": true,
+  "has_pck": true,
+  "pck_name": "MyChar",
+  "affects_gameplay": true,
+  "min_game_version": "0.111.0",
+  "dependencies": [
+    {
+      "id": "BaseLib",
+      "min_version": "3.4.5"
+    }
+  ]
+}

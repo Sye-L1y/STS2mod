@@ -16,7 +16,7 @@ namespace MyCharMod;
 
 /// <summary>
 /// 先古攻击（阿尔法突袭经「古老牙齿」转化而来）：全体 4 伤 ×N，响应；
-/// 迭代1：每打出一次，本局游戏内本牌伤害次数永久 +1（跨战斗，随牌存档）。
+/// 迭代2：每打出两次，本局游戏内本牌伤害次数永久 +1（跨战斗，随牌存档）。
 /// </summary>
 [Pool(typeof(MyCharCardPool))]
 public sealed class AlphaAnchor : AlphaCard
@@ -27,7 +27,7 @@ public sealed class AlphaAnchor : AlphaCard
 
     public override bool IsResponse => true;
 
-    public override int IterationEvery => 1;
+    public override int IterationEvery => 2;
 
     /// <summary>本局游戏内累计多打的次数（跨战斗持久化，见 <c>GeneticAlgorithm</c> 的写法）。</summary>
     [SavedProperty]
@@ -52,7 +52,7 @@ public sealed class AlphaAnchor : AlphaCard
 
     public override List<(string, string)>? Localization => new CardLoc(
         "阿尔法锚点",
-        "对所有敌人造成{Damage:diff()}点伤害{Hits}次。\n[gold]迭代1[/gold]：每打出一次，本局游戏内本牌伤害次数+1。",
+        "对所有敌人造成{Damage:diff()}点伤害{Hits}次。\n[gold]迭代2[/gold]：每打出两次，本局游戏内本牌伤害次数+1。",
         ("flavor", "钉在时间线上的锚，越用越沉。"));
 
     public AlphaAnchor()
@@ -75,10 +75,19 @@ public sealed class AlphaAnchor : AlphaCard
             .WithHitCount(hits)
             .WithHitFx("vfx/vfx_attack_slash")
             .Execute(choiceContext);
+    }
 
+    /// <summary>
+    /// 迭代完成（每打出 <see cref="IterationEvery"/> 次算一层）时结算：本牌伤害次数 +1。
+    /// 挂在迭代完成而不是 <see cref="PlayEffect"/> 里，是为了让「+1 次数」严格跟随<b>迭代档位</b>
+    /// —— 外部推进计数（加速编译 / 快速迭代 / 共演…）跨过的档位也会被 <c>FirePendingIterations</c> 补上。
+    /// </summary>
+    protected override Task OnIterationCompleted(PlayerChoiceContext choiceContext)
+    {
         // 本场战斗的临时副本 + 牌组里的持久副本一起涨，跨战斗才留得住。
         BonusHits += 1;
         (DeckVersion as AlphaAnchor)?.BuffFromPlay();
+        return Task.CompletedTask;
     }
 
     protected override void AfterDowngraded()

@@ -15,7 +15,7 @@ using MegaCrit.Sts2.Core.Nodes.Cards;
 namespace MyCharMod.Mechanics;
 
 /// <summary>
-/// 阿尔法机的战斗内核心状态：传参池 / 迭代计数 / 完全响应保留 / 自我升级计数。
+/// 阿尔法的战斗内核心状态：传参池 / 迭代计数 / 完全响应保留 / 自我升级计数。
 ///
 /// 做成**可见 Power**：状态栏上显示池中传参的条数，悬浮能逐条看到池里有什么。
 /// 层数放在 <see cref="PowerModel.GetInternalData{T}"/> 里，不走 Amount——因为 Amount 掉到 0

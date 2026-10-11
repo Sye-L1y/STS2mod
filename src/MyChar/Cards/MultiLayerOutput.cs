@@ -64,16 +64,17 @@ public sealed class MultiLayerOutput : AlphaCard
         _killedAny = false;
 
         int times = ResolveEnergyXValue();
-        for (int i = 0; i < times; i++)
+        if (times > 0)
         {
-            // 目标已经倒下就停手：继续打只会把剩余段数浪费在同一具尸体上。
-            if (cardPlay.Target.IsDead)
-            {
-                break;
-            }
+            // 与本体「旋风斩」等 X 段攻击同口径：**一次** Attack 命令打 X 段（WithHitCount），
+            // 而不是循环 X 次独立 Attack。分开循环时每一段都算一次独立攻击（各自触发 BeforeAttack /
+            // AfterAttack），「下一次攻击」类加成（活力）只会落在第一段；单命令则整次算一次攻击，
+            // 每一段都吃满加成，并尊重 Hook.ModifyAttackHitCount 的命中次数修正。
+            // 目标中途倒下时，命令内部的循环会自动 break，剩余段数不会浪费。
             await DamageCmd.Attack(RawDamage())
                 .FromCard(this, cardPlay)
                 .Targeting(cardPlay.Target)
+                .WithHitCount(times)
                 .WithHitFx("vfx/vfx_attack_slash")
                 .Execute(choiceContext);
         }

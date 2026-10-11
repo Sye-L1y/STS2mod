@@ -11,7 +11,7 @@ using MyCharMod.Mechanics;
 namespace MyCharMod;
 
 /// <summary>
-/// 起始遗物的古老版「自我进化」。通过「欧洛巴斯之触」由 <see cref="MyCharStarterRelic"/> 替换而来。
+/// 起始遗物的古老版「伽马芯片」。通过「欧洛巴斯之触」由 <see cref="MyCharStarterRelic"/> 替换而来。
 ///
 /// 与普通版同构，只把每次里程碑发放的协议层数从 1 提到 **2**。
 /// </summary>
@@ -25,7 +25,7 @@ public sealed class MyCharStarterRelicAncient : CustomRelicModel, IAlphaProtocol
 
     public override List<(string, string)>? Localization => new()
     {
-        ("title", "自我进化"),
+        ("title", "伽马芯片"),
         ("description", "战斗内每完成3次[gold]响应[/gold]或[gold]迭代[/gold]，获得2层[gold]协议[/gold]。"),
         ("flavor", "旧躯壳剥落，新协议在其中成形。"),
     };

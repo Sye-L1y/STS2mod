@@ -1,7 +1,11 @@
 # ---- 构建产物 ----
 bin/
 obj/
-pack/
+# pack/ 只放产物，但 manifest 是手写源文件（游戏内模组名/介绍），单独入库
+pack/*
+!pack/MyChar/
+pack/MyChar/*
+!pack/MyChar/MyChar.json
 
 # ---- 本地工具链（体积大，可重新获取，不入库）----
 # Godot 编辑器 / 导出模板（仅生成动画场景时手动使用，正常编译不需要）
@@ -25,3 +29,7 @@ __pycache__/
 build_out.txt
 build_err.txt
 .workbuddy/
+
+# ---- 未采用的回退素材：露骨差分不入公开库（本地文件保留，只是不提交）----
+.artwork/人物/战斗50%.png
+.artwork/人物/战斗20%.png

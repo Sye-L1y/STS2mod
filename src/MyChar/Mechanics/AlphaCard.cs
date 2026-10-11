@@ -44,7 +44,7 @@ public enum IterationEffectKind
 public readonly record struct IterationEffectSpec(string Prefix, decimal Value, string Unit);
 
 /// <summary>
-/// 阿尔法机所有卡牌的基类，把四个核心机制的通用流程收在一处：
+/// 阿尔法所有卡牌的基类，把四个核心机制的通用流程收在一处：
 ///
 /// 结算顺序固定为：
 ///   1. 响应（消费/读取传参池，逐条结算）

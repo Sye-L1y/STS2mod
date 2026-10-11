@@ -12,7 +12,7 @@ using MyCharMod.Mechanics;
 namespace MyCharMod;
 
 /// <summary>
-/// 起始遗物「自我升级」。
+/// 起始遗物「阿尔法芯片」。
 ///
 /// 职责：
 ///   1. 战斗开始时挂上两个**可见 Power**：传参池（<see cref="AlphaCorePower"/>）与
@@ -32,7 +32,7 @@ public sealed class MyCharStarterRelic : CustomRelicModel, IAlphaProtocolMilesto
 
     public override List<(string, string)>? Localization => new()
     {
-        ("title", "自我升级"),
+        ("title", "阿尔法芯片"),
         ("description", "战斗内每完成3次[gold]响应[/gold]或[gold]迭代[/gold]，获得1层[gold]协议[/gold]。"),
         ("flavor", "每一次应答，都让它更接近完美。"),
     };
