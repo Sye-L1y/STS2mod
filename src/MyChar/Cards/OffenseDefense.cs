@@ -14,11 +14,14 @@ namespace MyCharMod;
 
 /// <summary>
 /// 罕见攻击「攻守兼备」：造成 8（10）点伤害；
-/// [gold]传参[/gold]：响应牌**造成伤害时获得等量格挡**。
+/// [gold]传参[/gold]：响应牌**造成未被格挡伤害时获得等量格挡**。
 ///
-/// 传参本身没有即时效果（只打标记），响应牌在本次结算里造成的伤害由
+/// 传参本身没有即时效果（只打标记），响应牌在本次结算里造成的**未被格挡伤害**由
 /// <see cref="AlphaCard.AfterDamageGiven"/> 逐笔累加，打完一次性换成等量格挡（见 AlphaCard 的 2.6 步）。
 /// 口径同 P9：只作用于**消费它的那张响应牌本次结算**，不写回卡牌、不留存。
+/// ★ 换算基数是**实战的未被格挡伤害**（<c>TotalDamage − BlockedDamage</c>，v1.24 修订 b 起：**溢出算入**），
+/// 不是卡面值：力量 / 活力加成算数，被目标格挡掉的那段不算（完全被格挡 = 不给格挡）。
+/// ★ 「战斗预设」「目标回馈」同一口径（打 20 收 14 血敌人 → 三者都按 20 算）。
 /// </summary>
 [Pool(typeof(MyCharCardPool))]
 public sealed class OffenseDefense : AlphaCard
@@ -34,7 +37,7 @@ public sealed class OffenseDefense : AlphaCard
 
     public override List<(string, string)>? Localization => new CardLoc(
         "攻守兼备",
-        "造成{Damage:diff()}点伤害。\n[gold]传参[/gold]：响应牌造成伤害时获得等量格挡。",
+        "造成{Damage:diff()}点伤害。\n[gold]传参[/gold]：响应牌造成未被格挡伤害时获得等量格挡。",
         ("flavor", "打出去多少，就挡回来多少。"));
 
     public OffenseDefense()

@@ -24,6 +24,10 @@ public static class ModEntry
         // 迭代的卡面数值显示（IterationPreviewPatch）靠这里生效。
         new Harmony("MyCharMod").TryPatchAll(typeof(ModEntry).Assembly);
 
+        // 先把玩家设置读进来（局内战损立绘开关 / 选人立绘版本），
+        // 免得第一场战斗的立绘先按默认值渲染再被纠正。
+        MyCharSettings.EnsureLoaded();
+
         RegisterRelicIcons();
         Log.Info("[MyChar] mod initialized.");
     }

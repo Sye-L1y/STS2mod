@@ -2,6 +2,22 @@
 
 ; 选人界面背景（原版结构：char_select_bg_ironclad 的 Control 矩形 + SpineSprite 换成整图 TextureRect）
 ; 矩形 2560x1200 / pivot 1280,600 复刻本体 ironclad 背景，选人界面的徽章按钮等都叠在这个矩形上。
+;
+; ★ 坐标换算（实测自引擎 scenes/screens/character_select_screen.tscn）：
+;   本场景被挂在引擎的 AnimatedBg 下，而 AnimatedBg 带着
+;     scale = 1.1 / pivot = (1280,600) / rect = (屏幕 -388,-80) ~ (屏幕 +252,+40)，
+;   于是：屏幕坐标 = (892,520) + (本节点内坐标 - (960,523)) × 1.1
+;   （即内坐标 (960,523) ≈ 屏幕 (892,520)，整体放大 1.1 倍）。
+;   ⇒ 1920x1080 下屏幕可视区 ≈ 内坐标 x∈[149,1895]、y∈[50,1032]；
+;     内坐标 y 写得比 50 小就会跑到屏幕上方、看不见（v1.23 踩过：y=24 → 屏幕 y≈-29）。
+;   MyCharPanel 的实际位置由 SelectScreenPanelPatch 在运行时按**真实视口**贴到屏幕右上
+;   （避让右上角的 ActLabel / ActDropdown），下面这组 offset 只是编辑器里的预览值。
+;
+; MyCharPanel 是模组自己的开关面板（只有选中阿尔法时才随本场景出现）：
+;   DamagedToggle = 「局内战损立绘」总开关（战斗 / 商店 / 休息一起生效）
+;   ArtCycle      = 「选人立绘」版本切换（2 / 2+ / 3 / 3+，含本地专有的 nsfw 差分）
+;   两个按钮的文案与信号由 Patches/SelectScreenPanelPatch.cs 在运行时接线。
+;   focus_mode=0（None）是必须的：按钮不能抢走手柄 / 键盘在选人界面的焦点导航。
 
 [ext_resource type="Texture2D" path="res://MyChar/images/scene/select_bg.png" id="1_bg"]
 
@@ -30,3 +46,21 @@ grow_vertical = 2
 texture = ExtResource("1_bg")
 expand_mode = 1
 stretch_mode = 6
+
+[node name="MyCharPanel" type="VBoxContainer" parent="."]
+layout_mode = 0
+offset_left = 1612.0
+offset_top = 150.0
+offset_right = 1872.0
+offset_bottom = 258.0
+theme_override_constants/separation = 8
+
+[node name="DamagedToggle" type="Button" parent="MyCharPanel"]
+layout_mode = 2
+focus_mode = 0
+text = "局内战损立绘：开"
+
+[node name="ArtCycle" type="Button" parent="MyCharPanel"]
+layout_mode = 2
+focus_mode = 0
+text = "选人立绘：2"

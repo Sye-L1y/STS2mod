@@ -4,6 +4,11 @@
 ; SpineSprite 换成 Sprite2D。
 ; ⚠ 本体 NMerchantCharacter._Ready / PlayAnimation 会对 GetChild(0) 强行包 MegaSprite，
 ;   非 SpineSprite 会抛异常——mod 里 StaticBodyVisualsPatch 会在这两个方法前拦截跳过。
+; %Damaged70 / %Damaged50 / %Damaged20 是血量档位战损立绘（平时隐藏），由 mod 的
+;   SceneryDamagePatch 按 HP 切换；三档全是**本地专有素材**（用户明确「禁止分发」），
+;   所以这里是**空壳节点**：故意不写 texture，贴图运行时按需加载；素材不在 pck 里时
+;   贴图为 null，该档自动跳过、退回上一档，场景本身不会报错。
+;   节点位置必须与完好立绘 % 一致（同构图、只换衣服破损版本）。
 
 [ext_resource type="Script" path="res://src/Core/Nodes/Screens/Shops/NMerchantCharacter.cs" id="1_script"]
 [ext_resource type="Texture2D" path="res://MyChar/images/scene/merchant.png" id="2_merchant"]
@@ -14,3 +19,18 @@ script = ExtResource("1_script")
 [node name="Visuals" type="Sprite2D" parent="."]
 position = Vector2(0, -210)
 texture = ExtResource("2_merchant")
+
+[node name="Damaged70" type="Sprite2D" parent="."]
+visible = false
+unique_name_in_owner = true
+position = Vector2(0, -210)
+
+[node name="Damaged50" type="Sprite2D" parent="."]
+visible = false
+unique_name_in_owner = true
+position = Vector2(0, -210)
+
+[node name="Damaged20" type="Sprite2D" parent="."]
+visible = false
+unique_name_in_owner = true
+position = Vector2(0, -210)

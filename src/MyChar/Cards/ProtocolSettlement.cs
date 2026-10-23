@@ -57,7 +57,9 @@ public sealed class ProtocolSettlement : AlphaCard
             ProtocolPower.Of(this)?.AddProtocol(5);
         }
 
-        await DamageCmd.Attack(ResolveValue("PerLayer"))
+        // ★ 用 ResolveDamageValue 而不是 ResolveValue：被「语义附加」授予响应后，
+        //   传参池里的「伤害 +X% / +N」必须加在每层伤害上（ResolveValue 只吃 α 协议的增幅）。
+        await DamageCmd.Attack(ResolveDamageValue("PerLayer"))
             .FromCard(this, cardPlay)
             .TargetingRandomOpponents(combatState, true)
             .WithHitCount(layers)

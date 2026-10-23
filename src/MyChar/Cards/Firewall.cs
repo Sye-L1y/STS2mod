@@ -34,7 +34,8 @@ public sealed class Firewall : AlphaCard
 
     protected override async Task PlayEffect(PlayerChoiceContext choiceContext, CardPlay cardPlay)
     {
-        await CreatureCmd.GainBlock(Owner.Creature, DynamicVars.Block, cardPlay);
+        // ★ RawBlock()：与卡面预览（AlphaBlockVar）同口径，且「语义附加」授予响应后增幅才生效。
+        await CreatureCmd.GainBlock(Owner.Creature, RawBlock(), ValueProp.Move, cardPlay);
         await PowerCmd.Apply<PendingEnergyPower>(choiceContext, Owner.Creature, 1m,
             Owner.Creature, this);
     }

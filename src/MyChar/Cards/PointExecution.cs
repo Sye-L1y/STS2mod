@@ -52,7 +52,8 @@ public sealed class PointExecution : AlphaCard
 
         if (IsFirstAttackThisTurn())
         {
-            await DamageCmd.Attack(DynamicVars["Bonus"].BaseValue)
+            // 额外伤害同样是本牌的伤害：走 ResolveDamageValue，传参池的加伤（+X% / +N）对它一样生效。
+            await DamageCmd.Attack(ResolveDamageValue("Bonus"))
                 .FromCard(this, cardPlay)
                 .Targeting(cardPlay.Target)
                 .WithHitFx("vfx/vfx_attack_slash")

@@ -1,19 +1,29 @@
-# ---- 构建产物 ----
-bin/
-obj/
+# ============================================================
+# 仓库只保留 **mod 本体**：src/（+ 模组清单 pack/MyChar/MyChar.json + README + 本文件）
+#
+# 其余东西「只要在本机存在」就行，一律不提交（本地文件不会被删）：
+#   docs/        设计文档（卡池清单 / 逐轮计划 / 引擎踩坑）
+#   tools/       出图脚本 + 构建脚本 + Godot 工具链
+#   ref/         反编译源码（第三方代码，查 API 用）
+#   .artwork/    美术源图
+#   pack/        构建产物
+# ============================================================
+/*
+!/.gitignore
+!/.gitattributes
+!/README.md
+!/src/
+!/pack/
+
 # pack/ 只放产物，但 manifest 是手写源文件（游戏内模组名/介绍），单独入库
 pack/*
 !pack/MyChar/
 pack/MyChar/*
 !pack/MyChar/MyChar.json
 
-# ---- 本地工具链（体积大，可重新获取，不入库）----
-# Godot 编辑器 / 导出模板（仅生成动画场景时手动使用，正常编译不需要）
-tools/godot/
-tools/godot-mono.zip
-
-# ---- 反编译参考源码（查 API 用，第三方代码，不入库）----
-ref/
+# ---- 构建产物 ----
+src/**/bin/
+src/**/obj/
 
 # ---- IDE / 系统 ----
 .vs/
@@ -28,8 +38,17 @@ __pycache__/
 *.pyc
 build_out.txt
 build_err.txt
-.workbuddy/
 
-# ---- 未采用的回退素材：露骨差分不入公开库（本地文件保留，只是不提交）----
-.artwork/人物/战斗50%.png
-.artwork/人物/战斗20%.png
+# ---- 本地专有素材（★ 用户明确「禁止分发」：源图与成品都不入公开仓库）----
+# 战斗战损 50% / 20%（70% 档是可分发的，贴图固化在场景里）
+src/MyChar/assets/images/scene/combat_damaged_50.png
+src/MyChar/assets/images/scene/combat_damaged_20.png
+# 商店战损三档（全部本地专有）
+src/MyChar/assets/images/scene/merchant_damaged_70.png
+src/MyChar/assets/images/scene/merchant_damaged_50.png
+src/MyChar/assets/images/scene/merchant_damaged_20.png
+# 休息战损（只有 20% 一档）
+src/MyChar/assets/images/scene/rest_site_damaged_20.png
+# 选人立绘的露骨差分
+src/MyChar/assets/images/scene/select_bg_2nsfw.png
+src/MyChar/assets/images/scene/select_bg_3nsfw.png

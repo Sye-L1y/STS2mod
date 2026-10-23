@@ -18,7 +18,7 @@ namespace MyCharMod;
 
 /// <summary>
 /// 稀有攻击「目标回馈」：造成 1（2）点伤害；使手牌的一张[gold]迭代[/gold]牌计数器
-/// 增加「造成的**未被格挡伤害数**」（= 目标实际掉血数）。
+/// 增加「造成的**未被格挡伤害数**」（含溢出；被格挡掉的那段不算）。
 /// </summary>
 [Pool(typeof(MyCharCardPool))]
 public sealed class TargetFeedback : AlphaCard
@@ -51,8 +51,10 @@ public sealed class TargetFeedback : AlphaCard
             .WithHitFx("vfx/vfx_attack_slash")
             .Execute(choiceContext);
 
-        int unblocked = attack.Results.SelectMany(hit => hit).Sum(result => result.UnblockedDamage);
-        if (unblocked <= 0)
+        // 未被格挡伤害（含溢出）：打 20 收 14 血的敌人 → 14 + 6 = 20；被格挡段不计入。
+        int dealt = attack.Results.SelectMany(hit => hit)
+            .Sum(result => result.TotalDamage - result.BlockedDamage);
+        if (dealt <= 0)
         {
             return;
         }
@@ -79,7 +81,7 @@ public sealed class TargetFeedback : AlphaCard
         }
 
         // 推进迭代计数（并补结算跨过的档位）。
-        await core.AdvanceIteration(choiceContext, chosen, unblocked);
+        await core.AdvanceIteration(choiceContext, chosen, dealt);
     }
 
     private static bool IsIterationCard(CardModel card) =>

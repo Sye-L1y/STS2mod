@@ -6,6 +6,9 @@
 ; body 不是 SpineSprite 时引擎走 HasSpineAnimation=false 分支，战斗逻辑全部安全。
 ; %DefeatSprite 是死亡时显示的失败立绘（平时隐藏），由 mod 的 DefeatSwapPatch 切换。
 ; %DamagedSprite 是血量档位战损立绘（平时隐藏），由 mod 的 DamageVisualsPatch 按 HP 切换。
+; %TierSprite50 / %TierSprite20 是 50% / 20% 两档的**空壳节点**：故意不写 texture，
+;   贴图由 DamageVisualsPatch 运行时按需加载（那两张是本地专有素材，不进公开仓库）。
+;   素材不在 pck 里时贴图为 null，该档自动跳过，场景本身不会报错。
 
 [ext_resource type="Script" path="res://src/Core/Nodes/Combat/NCreatureVisuals.cs" id="1_script"]
 [ext_resource type="Texture2D" path="res://MyChar/images/scene/combat.png" id="2_combat"]
@@ -34,6 +37,18 @@ unique_name_in_owner = true
 position = Vector2(0, -160)
 scale = Vector2(1, 1)
 texture = ExtResource("4_damaged")
+
+[node name="TierSprite50" type="Sprite2D" parent="."]
+visible = false
+unique_name_in_owner = true
+position = Vector2(0, -160)
+scale = Vector2(1, 1)
+
+[node name="TierSprite20" type="Sprite2D" parent="."]
+visible = false
+unique_name_in_owner = true
+position = Vector2(0, -160)
+scale = Vector2(1, 1)
 
 [node name="DefeatSprite" type="Sprite2D" parent="."]
 visible = false

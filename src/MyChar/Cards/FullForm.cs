@@ -5,6 +5,8 @@ using BaseLib.Utils;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.GameActions.Multiplayer;
+using MegaCrit.Sts2.Core.Logging;
+using MegaCrit.Sts2.Core.Models;
 using MyCharMod.Mechanics;
 
 namespace MyCharMod;
@@ -34,6 +36,21 @@ public sealed class FullForm : AlphaCard
     protected override async Task PlayEffect(PlayerChoiceContext choiceContext, CardPlay cardPlay)
     {
         await PowerCmd.Apply<FullFormPower>(choiceContext, Owner.Creature, 1m, Owner.Creature, this);
+    }
+
+    /// <summary>
+    /// 诊断用：这张牌每次进战斗时把「实际词条 + 升级档」写一行日志。
+    /// 只是回答「完全形态是不是固有」——词条里没有 Innate 就说明它没带固有，开局上手是抽牌随机（种子）。
+    /// 若确认没问题，这段可以整块删掉。
+    /// </summary>
+    public override Task AfterCardEnteredCombat(CardModel card)
+    {
+        if (ReferenceEquals(card, this))
+        {
+            Log.Info($"[MyChar] 完全形态入场：升级 {CurrentUpgradeLevel}，词条 " +
+                     $"[{string.Join("、", Keywords)}]");
+        }
+        return Task.CompletedTask;
     }
 
     protected override void OnUpgrade()

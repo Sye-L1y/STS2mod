@@ -4,6 +4,10 @@
 ; NRestSiteCharacter._Ready 需要 ControlRoot / %Hitbox / %SelectionReticle / %ThoughtBubbleLeft|Right，
 ; SpineSprite 换成 Sprite2D（GetChildSpineNodes() 找不到 Spine 会直接跳过动画，安全）。
 ; SelectionReticle 直接引用本体场景。
+; 立绘 360x480（由 make_assets.py 的 scene_box 出图）→ Visuals.position = (0, -height/2) = (0, -240)，
+; 让脚底落在节点原点（与 ironclad 骨架同基准）。改出图高度时这里要同步改。
+; %Damaged20 是血量 ≤20% 时的破损立绘（平时隐藏），由 mod 的 SceneryDamagePatch 切换；
+;   素材是**本地专有**（用户明确「禁止分发」）→ 空壳节点，贴图运行时按需加载，缺图则该档跳过。
 
 [ext_resource type="Script" path="res://src/Core/Nodes/RestSite/NRestSiteCharacter.cs" id="1_script"]
 [ext_resource type="Texture2D" path="res://MyChar/images/scene/rest_site.png" id="2_rest"]
@@ -15,8 +19,13 @@ scale = Vector2(0.760006, 0.760006)
 script = ExtResource("1_script")
 
 [node name="Visuals" type="Sprite2D" parent="."]
-position = Vector2(0, -170)
+position = Vector2(0, -240)
 texture = ExtResource("2_rest")
+
+[node name="Damaged20" type="Sprite2D" parent="."]
+visible = false
+unique_name_in_owner = true
+position = Vector2(0, -240)
 
 [node name="ControlRoot" type="Control" parent="."]
 layout_mode = 3

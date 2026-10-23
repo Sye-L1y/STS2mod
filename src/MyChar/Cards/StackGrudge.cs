@@ -22,6 +22,9 @@ namespace MyCharMod;
 /// 「负面效果」按目标敌人身上 PowerType.Debuff 的条目统计，并按 Power 类型去重
 /// （每种状态只算一次）——和本职业「负面状态作用于本次目标」的口径一致。
 /// 额外伤害与基础伤害合并为一次攻击结算，力量 / 活力照常作用其上。
+///
+/// ★ 卡面 <c>{Damage}</c> 显示的是**总伤害**（基础 + 额外）：走 <see cref="AlphaCard.PreviewBonusDamage"/>，
+/// 预览能拿到目标时（悬停敌人）按目标的负面状态数算满，拿不到目标就按最保守（不加负面状态加成）显示。
 /// </summary>
 [Pool(typeof(MyCharCardPool))]
 public sealed class StackGrudge : AlphaCard
@@ -39,7 +42,7 @@ public sealed class StackGrudge : AlphaCard
 
     public override List<(string, string)>? Localization => new CardLoc(
         "叠仇",
-        "造成{Damage:diff()}点伤害，额外造成等同于自身已损失生命{LostHpPct:diff()}%的伤害。\n目标身上每有一种不同的[gold]负面效果[/gold]，这份额外伤害的倍率+{PerDebuff:diff()}%。",
+        "造成{Damage:diff()}点伤害。\n额外伤害=自身已损失生命{LostHpPct:diff()}%；目标身上每有一种不同的[gold]负面效果[/gold]，这份额外伤害的倍率+{PerDebuff:diff()}%。",
         ("flavor", "它记着每一次受伤，也记着每一个被削弱的敌人。"));
 
     public StackGrudge()
@@ -50,19 +53,30 @@ public sealed class StackGrudge : AlphaCard
     protected override async Task PlayEffect(PlayerChoiceContext choiceContext, CardPlay cardPlay)
     {
         ArgumentNullException.ThrowIfNull(cardPlay.Target, "cardPlay.Target");
-
-        Creature self = Owner.Creature;
-        decimal lostHp = Math.Max(self.MaxHp - self.CurrentHp, 0);
-        decimal ratio = DynamicVars["LostHpPct"].BaseValue / 100m;
-        decimal multiplier = 1m + DistinctDebuffCount(cardPlay.Target)
-            * DynamicVars["PerDebuff"].BaseValue / 100m;
-        decimal bonus = Math.Floor(lostHp * ratio * multiplier);
-
-        await DamageCmd.Attack(RawDamage() + bonus)
+        await DamageCmd.Attack(RawDamage() + BonusDamage(cardPlay.Target))
             .FromCard(this, cardPlay)
             .Targeting(cardPlay.Target)
             .WithHitFx("vfx/vfx_attack_slash")
             .Execute(choiceContext);
+    }
+
+    /// <summary>卡面预览：把额外伤害也算进 <c>{Damage}</c>（实战值 = 基础 + 额外，两者一起显示最直观）。</summary>
+    protected override decimal PreviewBonusDamage(Creature? target) =>
+        Owner?.Creature == null ? 0m : BonusDamage(target);
+
+    /// <summary>
+    /// 额外伤害 = floor(已损失生命 × LostHpPct% × 倍率)；
+    /// 倍率 = 1 + 目标身上不同种类负面效果数 × PerDebuff%。
+    /// 实战与卡面预览共用这一个口径；<paramref name="target"/> 为 null（预览没目标）时倍率按 1 算。
+    /// </summary>
+    private decimal BonusDamage(Creature? target)
+    {
+        Creature self = Owner.Creature;
+        decimal lostHp = Math.Max(self.MaxHp - self.CurrentHp, 0);
+        decimal ratio = DynamicVars["LostHpPct"].BaseValue / 100m;
+        decimal multiplier = 1m + (target == null ? 0m : DistinctDebuffCount(target))
+            * DynamicVars["PerDebuff"].BaseValue / 100m;
+        return Math.Floor(lostHp * ratio * multiplier);
     }
 
     /// <summary>目标身上不同种类负面效果的数量（按 Power 类型去重）。</summary>

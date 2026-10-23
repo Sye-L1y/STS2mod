@@ -38,7 +38,8 @@ internal sealed class AlphaDamageVar : DamageVar
     public override void UpdateCardPreview(CardModel card, CardPreviewMode previewMode, Creature? target,
         bool runGlobalHooks)
     {
-        decimal raw = _main && card is AlphaCard alpha ? alpha.RawDamage() : BaseValue;
+        // 预览时把目标传进去：像「叠仇」这种按目标负面状态算额外伤害的牌，卡面才能显示实战值。
+        decimal raw = _main && card is AlphaCard alpha ? alpha.RawDamage(target) : BaseValue;
         if (!runGlobalHooks)
         {
             PreviewValue = raw;

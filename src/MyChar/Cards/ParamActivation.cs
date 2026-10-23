@@ -40,7 +40,8 @@ public sealed class ParamActivation : AlphaCard
 
     protected override async Task PlayEffect(PlayerChoiceContext choiceContext, CardPlay cardPlay)
     {
-        await CreatureCmd.GainBlock(Owner.Creature, DynamicVars.Block, cardPlay);
+        // ★ RawBlock()：与卡面预览（AlphaBlockVar）同口径；被「语义附加」授予响应后 α 协议增幅才生效。
+        await CreatureCmd.GainBlock(Owner.Creature, RawBlock(), ValueProp.Move, cardPlay);
     }
 
     protected override ParamEntry? BuildParam() =>

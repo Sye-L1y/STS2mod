@@ -30,7 +30,16 @@ internal static class StaticBodyVisualsPatch
     private static bool SkipMerchantReady(NMerchantCharacter __instance)
     {
         // 原方法只做一件事：等 Spine 就绪后播 relaxed_loop。静态图直接跳过。
-        return FirstChildIsSpine(__instance);
+        if (FirstChildIsSpine(__instance))
+        {
+            return true;
+        }
+
+        // ★ 静态图这条路上原方法不执行 —— 所以战损档位的挂载**不能**只挂在 _Ready 的 Postfix 上
+        //   （Prefix 返回 false 时 Postfix 是否执行取决于 Harmony 实现，不能赌；v1.23b 踩过这个坑：
+        //   商店战损一直不切）。这里在 Prefix 里顺手把档位挂上，Attach 内部会去重。
+        SceneryDamagePatch.AttachMerchant(__instance);
+        return false;
     }
 
     [HarmonyPatch(typeof(NMerchantCharacter), nameof(NMerchantCharacter.PlayAnimation))]
@@ -44,6 +53,7 @@ internal static class StaticBodyVisualsPatch
 /// <summary>
 /// 失败立绘切换：玩家角色死亡时把战斗场景里的 %Visuals（站姿）隐藏、%DefeatSprite（倒地）显示，
 /// 复活时换回来。场景里没有这两个节点（比如沿用 ironclad 占位）时什么都不做。
+/// 同时通知 <see cref="DamageVisualsPatch"/> 收掉 / 重算血量档位图，避免两张立绘叠在一起。
 /// </summary>
 [HarmonyPatch]
 internal static class DefeatSwapPatch
@@ -71,6 +81,10 @@ internal static class DefeatSwapPatch
 
         body.Visible = !defeated;
         defeat.Visible = defeated;
+
+        // 档位图归 DamageVisualsPatch 管：倒地时收掉、复活后重算（血量可能仍然很低）。
+        DamageVisualsPatch.OnDefeatChanged(creature, defeated);
+
         MegaCrit.Sts2.Core.Logging.Log.Info($"[MyChar] defeat visual {(defeated ? "on" : "off")}.");
     }
 

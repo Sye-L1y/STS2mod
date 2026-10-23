@@ -17,6 +17,7 @@ using MegaCrit.Sts2.Core.Localization.DynamicVars;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Models.Cards;
 using MegaCrit.Sts2.Core.Models.Powers;
+using MegaCrit.Sts2.Core.Nodes.Cards;
 using MegaCrit.Sts2.Core.ValueProps;
 
 namespace MyCharMod.Mechanics;
@@ -82,12 +83,13 @@ public abstract class AlphaCard : CustomCardModel
     private bool _returnToHandAfterPlay;
 
     /// <summary>
-    /// 本牌本次结算消费到了「受伤回格挡」传参（<see cref="ParamKind.BlockFromDamage"/>）：
-    /// 在 <see cref="AfterDamageGiven"/> 里累加本牌造成的伤害，打完一次性换成等量格挡。
+    /// 本牌本次结算消费到「受伤回格挡」传参（<see cref="ParamKind.BlockFromDamage"/>）的**份数**（0 = 没消费到）。
+    /// 在 <see cref="AfterDamageGiven"/> 里累加本牌造成的**未被格挡伤害**，打完一次性换成「未被格挡伤害 × 份数」的格挡。
+    /// ★ 多份叠加（「攻守兼备」连打两张 = 2 份 → 2 倍格挡），与其他传参「同类相加」同口径。
     /// </summary>
-    private bool _gainBlockFromDamage;
+    private int _blockFromDamageCopies;
 
-    /// <summary>本牌本次结算已造成的伤害合计（供「攻守兼备」传参换算格挡）。</summary>
+    /// <summary>本牌本次结算已造成的**未被格挡伤害**合计（供「攻守兼备」传参换算格挡）。</summary>
     private decimal _damageDealtThisPlay;
 
     /// <summary>本次打出时，响应是否真的消费到了传参（供「零基启动」判断是否回手）。每次打出刷新。</summary>
@@ -123,7 +125,45 @@ public abstract class AlphaCard : CustomCardModel
     public bool HasResponse => IsResponse || _grantedResponse;
 
     /// <summary>「语义附加」用：让这张牌本场战斗内获得「响应」。</summary>
-    public void GrantResponse() => _grantedResponse = true;
+    /// <remarks>
+    /// ★ 卡面词条不在这里写进 <c>LocalKeywords</c>（那是**持久**状态，会跟着牌组走进存档、下一场还挂着），
+    /// 而是走 <see cref="TryModifyKeywordsInCombat"/> 的**战斗内全局关键词**：Power 一消失就自动没了。
+    /// 授予后必须自己刷一次卡面 —— 手牌节点的描述文本是缓存过的，不会发现状态变了（见 <see cref="RefreshFace"/>）。
+    /// </remarks>
+    public void GrantResponse()
+    {
+        if (_grantedResponse)
+        {
+            return;
+        }
+        _grantedResponse = true;
+        RefreshFace();
+    }
+
+    /// <summary>
+    /// 战斗内全局关键词：被「语义附加」授予响应后，卡面 / 悬浮说明上的「响应」词条由这里补。
+    /// 只在战斗中（<c>CombatState != null</c>）参与计算，战斗结束自动消失，不写进卡牌本体。
+    /// </summary>
+    public override bool TryModifyKeywordsInCombat(CardModel card, ISet<CardKeyword> keywords)
+    {
+        if (!_grantedResponse || !ReferenceEquals(card, this))
+        {
+            return false;
+        }
+        return keywords.Add(AlphaKeywords.Response);
+    }
+
+    /// <summary>
+    /// 卡面重算：手牌 / 出牌区的常驻节点不会自己发现「关键词、数值、描述」变了，
+    /// 运行时改了牌的状态（授予响应、改迭代计数…）都要手动通知一次。
+    /// </summary>
+    internal void RefreshFace()
+    {
+        if (Pile is { } pile)
+        {
+            NCard.FindOnTable(this)?.UpdateVisuals(pile.Type, CardPreviewMode.Normal);
+        }
+    }
 
     /// <summary>是否带「传参」：打出时向池里加入一条传参。</summary>
     public virtual bool IsParamSource => false;
@@ -292,7 +332,7 @@ public abstract class AlphaCard : CustomCardModel
         decimal damageBoost = 1m;
         decimal damageAdd = 0m;
         // 每次打出都清掉上一次的「受伤回格挡」进度。
-        _gainBlockFromDamage = false;
+        _blockFromDamageCopies = 0;
         _damageDealtThisPlay = 0m;
         // 「群伤」传参延后到本牌自身效果之后再结算（原因见下方响应阶段的注释）。
         var deferredGroupDamage = new List<ParamEntry>();
@@ -396,13 +436,16 @@ public abstract class AlphaCard : CustomCardModel
             await ApplyParam(choiceContext, cardPlay, entry);
         }
 
-        // 2.6) 「攻守兼备」传参：本牌本次造成的伤害全部换算成格挡（无伤害则不给）。
-        if (_gainBlockFromDamage)
+        // 2.6) 「攻守兼备」传参：本牌本次造成的**未被格挡伤害**全部换算成格挡（完全被格挡则不给）。
+        //      份数 = 本次消费到的 BlockFromDamage 条数（连打两张攻守兼备 = 2 倍）。
+        if (_blockFromDamageCopies > 0)
         {
-            _gainBlockFromDamage = false;
+            int copies = _blockFromDamageCopies;
+            _blockFromDamageCopies = 0;
             if (_damageDealtThisPlay > 0m)
             {
-                await CreatureCmd.GainBlock(Owner.Creature, _damageDealtThisPlay, ValueProp.Move, cardPlay);
+                await CreatureCmd.GainBlock(Owner.Creature, _damageDealtThisPlay * copies, ValueProp.Move,
+                    cardPlay);
             }
             _damageDealtThisPlay = 0m;
         }
@@ -457,18 +500,39 @@ public abstract class AlphaCard : CustomCardModel
     }
 
     /// <summary>
-    /// 本牌「伤害」的原始值（力量 / 活力还没加）= floor((基础值 + 迭代成长) × 本次增幅)。
+    /// 本牌「伤害」的原始值（力量 / 活力还没加）
+    /// = floor((基础值 + 迭代成长) × 本次增幅) × <see cref="DamageMultiplier"/> + 平伤（+ 预览额外伤害）。
     /// 实战（<see cref="PlayEffect"/> 期间）用本次吃到的传参增幅，预览用池里挂着的增幅（见 <see cref="PreviewBoostFor"/>）。
     /// 卡面（<see cref="AlphaDamageVar"/>）与实战（<c>DamageCmd.Attack</c>）都把这个原始值交给
     /// <c>Hook.ModifyDamage</c>，所以力量 / 活力在两边加得完全一致，不再出现「卡面 60、实打 10」。
     /// </summary>
-    internal decimal RawDamage()
+    /// <param name="previewTarget">
+    /// 卡面预览时的目标（悬停的敌人 / 当前目标），只有预览用得到，实战传 null；
+    /// 供 <see cref="PreviewBonusDamage"/> 这类「按目标算」的额外伤害读取。
+    /// </param>
+    internal decimal RawDamage(Creature? previewTarget = null)
     {
         decimal boost = _resolving ? _responseDamageBoost * _damageBoost : PreviewBoostFor("Damage");
-        decimal raw = ApplyBoost(RawBase("Damage"), boost);
+        // 乘法增幅（如「数据模拟」的迭代翻倍）先乘上去，再叠平伤 —— 与传参「先乘后加」同口径。
+        decimal raw = ApplyBoost(RawBase("Damage"), boost) * DamageMultiplier;
         // DamageAdd 是「乘算增幅之后再叠加」的平伤：先乘后加。
-        return raw + (_resolving ? _damageAdd : PreviewDamageAddFor());
+        decimal add = _resolving ? _damageAdd : PreviewDamageAddFor();
+        // 额外伤害（如「叠仇」按已损失生命算的那部分）：实战由 PlayEffect 自己算，这里只补卡面。
+        return raw + add + (_resolving ? 0m : PreviewBonusDamage(previewTarget));
     }
+
+    /// <summary>
+    /// 本牌伤害的**乘法增幅**（默认 1）：实战与卡面预览都乘在「基础值 + 迭代成长 × 传参增幅」之后。
+    /// 先例：「数据模拟」的迭代翻倍（层数 n → ×2ⁿ）—— 走这里才能让卡面数字与实际打出自动一致。
+    /// </summary>
+    protected virtual decimal DamageMultiplier => 1m;
+
+    /// <summary>
+    /// 卡面预览用的**额外伤害**（默认 0）：加在乘法增幅之后、力量 / 活力之前；实战由 <see cref="PlayEffect"/> 自己算。
+    /// 先例：「叠仇」按自身已损失生命算的附加伤害 —— 预览能拿到目标时按目标的负面状态数算满，
+    /// 拿不到目标就按最保守（不加负面状态加成）显示，至少比只显示基础伤害准确。
+    /// </summary>
+    protected virtual decimal PreviewBonusDamage(Creature? target) => 0m;
 
     /// <summary>卡面预览用的平伤加成 = 池里挂着的 DamageAdd 之和（只有响应牌才算，受伤害类传参倍率放大）。</summary>
     private decimal PreviewDamageAddFor() =>
@@ -499,6 +563,28 @@ public abstract class AlphaCard : CustomCardModel
             ? variable.BaseValue
             : 0m) + iterationBonus;
         return ApplyBoost(raw, _responseBoost);
+    }
+
+    /// <summary>
+    /// <b>伤害</b>用的自定义变量结算值（不走 <c>{Damage}</c> 的伤害，如「歼灭龙息」的每层伤害
+    /// <c>PerLayer</c>、「定点执行」的额外伤害 <c>Bonus</c>）。
+    ///
+    /// ★ 为什么必须有它：<see cref="ResolveValue"/> 只吃 α 协议的 <see cref="ParamKind.EffectBoost"/>，
+    /// 不吃 <see cref="ParamKind.DamageBoost"/>（伤害 +X%）与 <see cref="ParamKind.DamageAdd"/>（伤害 +N）。
+    /// 这些牌原来直接调 <see cref="ResolveValue"/>，于是「语义附加」把它们变成响应牌后，
+    /// 传参池里的加伤传参被消费了却完全没有作用（β 的回血却正常，因为回血是即时结算）。
+    ///
+    /// 口径与 <see cref="RawDamage"/> 完全一致：先乘算增幅（EffectBoost 伤害部分 + DamageBoost + 凝神聚气），
+    /// 再叠加平伤（DamageAdd）。平伤按「每一段命中各加一次」处理，与多段牌把 DamageAdd 加进每段一致。
+    /// </summary>
+    protected decimal ResolveDamageValue(string varName, decimal iterationBonus = 0m)
+    {
+        decimal raw = (DynamicVars.TryGetValue(varName, out DynamicVar? variable)
+            ? variable.BaseValue
+            : 0m) + iterationBonus;
+        decimal boost = _resolving ? _responseDamageBoost * _damageBoost : PreviewBoostFor("Damage");
+        decimal add = _resolving ? _damageAdd : PreviewDamageAddFor();
+        return ApplyBoost(raw, boost) + add;
     }
 
     /// <summary>
@@ -639,9 +725,9 @@ public abstract class AlphaCard : CustomCardModel
                 break;
 
             case ParamKind.BlockFromDamage:
-                // 没有即时效果：打标记，本牌本次造成的伤害在 AfterDamageGiven 里累加，
-                // 打完一次性换算成等量格挡（见 OnPlay 的 2.6 步）。
-                _gainBlockFromDamage = true;
+                // 没有即时效果：记一份，本牌本次造成的**未被格挡伤害**（含溢出）在 AfterDamageGiven 里累加，
+                // 打完一次性换算成「未被格挡伤害 × 份数」的格挡（见 OnPlay 的 2.6 步）。
+                _blockFromDamageCopies++;
                 break;
 
             case ParamKind.ReturnToHand:
@@ -652,16 +738,22 @@ public abstract class AlphaCard : CustomCardModel
     }
 
     /// <summary>
-    /// 「攻守兼备」传参：本牌（响应牌）本次结算造成的伤害逐笔记账。
-    /// 只记「本牌自己打出的、且正在结算中」的伤害（<c>cardSource == this &amp;&amp; _resolving</c>），
-    /// 打完在 <see cref="OnPlay"/> 的 2.6 步一次性换成等量格挡。
+    /// 「攻守兼备」传参：本牌（响应牌）本次结算造成的**未被格挡伤害**逐笔记账。
+    /// 只记「本牌自己打出的、且本次消费到了该传参」的伤害（<c>cardSource == this &amp;&amp; 份数 &gt; 0</c>），
+    /// 打完在 <see cref="OnPlay"/> 的 2.6 步一次性换成等量格挡（× 份数）。
+    ///
+    /// ★ 不判 <c>_resolving</c>：**群伤**传参是延后到本牌自身效果之后（2.5 步）才结算的，
+    /// 那时 <c>_resolving</c> 已还原；只看「份数 &gt; 0」这个本次打出的窗口，多段 / 群伤才能一起记账。
+    ///
+    /// ★ 口径 = 「未被格挡伤害」= <c>TotalDamage − BlockedDamage</c>（v1.24 修订 b 起：**溢出算入**），
+    /// 与「战斗预设」「目标回馈」一致；被格挡掉的那段不算（完全被格挡 = 0 → 不给格挡）。
     /// </summary>
     public override Task AfterDamageGiven(PlayerChoiceContext choiceContext, Creature? dealer,
         DamageResult result, ValueProp props, Creature target, CardModel? cardSource)
     {
-        if (_resolving && _gainBlockFromDamage && cardSource == this)
+        if (_blockFromDamageCopies > 0 && cardSource == this)
         {
-            _damageDealtThisPlay += result.TotalDamage;
+            _damageDealtThisPlay += result.TotalDamage - result.BlockedDamage;
         }
         return base.AfterDamageGiven(choiceContext, dealer, result, props, target, cardSource);
     }

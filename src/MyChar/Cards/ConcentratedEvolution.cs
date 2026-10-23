@@ -35,7 +35,8 @@ public sealed class ConcentratedEvolution : AlphaCard
         "聚神进化",
         "使手牌中一张[gold]迭代[/gold]牌的迭代计数+{Boost:diff()}。",
         ("flavor", "把散落的进度全部聚到一个点上。"),
-        ("selectionScreenPrompt", "选择一张迭代牌，迭代计数 +{Amount}"));
+        // 同「加速编译」：必须写卡面的动态变量（Boost），{Amount} 是「选几张」（=1），会显示成 +1。
+        ("selectionScreenPrompt", "选择一张迭代牌，迭代计数 +{Boost:diff()}"));
 
     public ConcentratedEvolution()
         : base(1, CardType.Skill, CardRarity.Rare, TargetType.Self)

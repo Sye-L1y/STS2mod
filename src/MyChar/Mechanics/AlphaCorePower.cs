@@ -313,6 +313,11 @@ public sealed class AlphaCorePower : CustomPowerModel, IAddDumbVariablesToPowerD
             await alpha.FirePendingIterations(choiceContext);
         }
         RefreshCardFace(card);
+        // 迭代计数还会决定「优美公式」的降费（已完成迭代次数 ≥ 门槛 → 费用 -N）。
+        // 费用本身是 hook 即时算的，但界面刷新的链路挂在卡牌的 EnergyCostChanged 事件上
+        // （→ CombatStateTracker → 下一帧重算 + 刷新手牌节点）。手动改计数就绕过了引擎的事件，
+        // 所以这里得自己通知一声，否则「加速编译」把一张牌推过门槛后，它的费用要等下一次刷新才降。
+        card.InvokeEnergyCostChanged();
     }
 
     /// <summary>

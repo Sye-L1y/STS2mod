@@ -28,7 +28,9 @@ public sealed class AcceleratedCompile : AlphaCard
         "加速编译",
         "使手牌中一张[gold]迭代[/gold]牌的迭代计数+{Boost:diff()}。",
         ("flavor", "跳过几步，直接编译到下一段。"),
-        ("selectionScreenPrompt", "选择一张迭代牌，迭代计数 +{Amount}"));
+        // ★ 这里必须写卡面用的动态变量名（Boost），不能写 {Amount} —— 选择界面的 Amount 是「选几张」（=1），
+        //   写它会显示成「+1」，与卡面的 +3（升级 +4）对不上。
+        ("selectionScreenPrompt", "选择一张迭代牌，迭代计数 +{Boost:diff()}"));
 
     public AcceleratedCompile()
         : base(1, CardType.Skill, CardRarity.Uncommon, TargetType.Self)

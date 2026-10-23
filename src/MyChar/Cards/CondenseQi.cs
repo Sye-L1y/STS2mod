@@ -36,7 +36,9 @@ public sealed class CondenseQi : AlphaCard
 
     protected override async Task PlayEffect(PlayerChoiceContext choiceContext, CardPlay cardPlay)
     {
-        await CreatureCmd.GainBlock(Owner.Creature, DynamicVars.Block, cardPlay);
+        // ★ RawBlock()：卡面预览（AlphaBlockVar）算的就是 RawBlock（含迭代成长与 α 协议增幅），
+        //   原来直接传 DynamicVars.Block 只取 BaseValue → 预览与实际不一致、被「语义附加」授予响应后增幅也不生效。
+        await CreatureCmd.GainBlock(Owner.Creature, RawBlock(), ValueProp.Move, cardPlay);
     }
 
     protected override ParamEntry? BuildParam() =>

@@ -1,5 +1,7 @@
 namespace MyCharMod;
 
+using Godot;
+
 /// <summary>
 /// mod 内资源路径的统一入口。
 ///
@@ -45,4 +47,53 @@ public static class MyCharAssets
 
     /// <summary>描述内联 [E] 图标，本体 24x24。</summary>
     public static string EnergyText => Image("ui/energy_text.png");
+
+    // —— 战斗立绘战损档位（HP 比例 ≤ 阈值时切换，见 Patches/DamageVisualsPatch.cs）——
+    /// <summary>70% 档。贴图直接写在 scenes/creature_visuals.tscn 的 %DamagedSprite 上（可分发）。</summary>
+    public static string CombatDamaged => Image("scene/combat_damaged.png");
+
+    /// <summary>50% 档。★ 本地专有素材，不入公开仓库；文件缺失时该档自动退回上一档。</summary>
+    public static string CombatDamaged50 => Image("scene/combat_damaged_50.png");
+
+    /// <summary>20% 档。★ 本地专有素材，不入公开仓库；文件缺失时该档自动退回上一档。</summary>
+    public static string CombatDamaged20 => Image("scene/combat_damaged_20.png");
+
+    // —— 商店 / 休息立绘战损档位（见 Patches/SceneryDamagePatch.cs）——
+    // ★ 商店三档与休息 20% 全部是本地专有素材（用户明确「禁止分发」）：场景里只有空壳节点，
+    //   贴图运行时按需加载；别人的 clone 里这三档/一档直接跳过，显示完好立绘。
+    public static string MerchantDamaged70 => Image("scene/merchant_damaged_70.png");
+
+    public static string MerchantDamaged50 => Image("scene/merchant_damaged_50.png");
+
+    public static string MerchantDamaged20 => Image("scene/merchant_damaged_20.png");
+
+    public static string RestSiteDamaged20 => Image("scene/rest_site_damaged_20.png");
+
+    // —— 选人界面立绘版本（选人界面上的按钮按 2 / 2+ / 3 / 3+ 切换，见 Patches/SelectScreenPanelPatch.cs）——
+    /// <summary>版本「2」——默认版本（改造前一直用的那张），贴图固化在 scenes/select_bg.tscn 里。</summary>
+    public static string SelectBg => Image("scene/select_bg.png");
+
+    /// <summary>版本「3」。</summary>
+    public static string SelectBg3 => Image("scene/select_bg_3.png");
+
+    /// <summary>版本「2+」（选人2 的露骨差分）。★ 本地专有素材，不入公开仓库；缺失时切换自动跳过。</summary>
+    public static string SelectBg2Nsfw => Image("scene/select_bg_2nsfw.png");
+
+    /// <summary>版本「3+」（选人3 的露骨差分）。★ 本地专有素材，不入公开仓库；缺失时切换自动跳过。</summary>
+    public static string SelectBg3Nsfw => Image("scene/select_bg_3nsfw.png");
+
+    // —— 可选素材探测 ——
+    /// <summary>
+    /// 资源是否在当前 mod 里。本地专有素材在别人的 clone 里是缺的，所以加载前一律先探存在性。
+    /// pck 里 png 是「xxx.png.import + .godot/imported/*.ctex」两条，裸 .png 条目不一定在，
+    /// 所以三条都探一遍（Exists 走重映射、FileExists 走真实条目）。
+    /// 注意：FileAccess 要写全 <c>Godot.</c> 前缀（ImplicitUsings 带进来的 System.IO.FileAccess 会撞名）。
+    /// </summary>
+    public static bool Exists(string path) =>
+        ResourceLoader.Exists(path)
+        || Godot.FileAccess.FileExists(path)
+        || Godot.FileAccess.FileExists(path + ".import");
+
+    /// <summary>按需加载贴图；不在 mod 里（别人的 clone）返回 null，不报错、不刷屏。</summary>
+    public static Texture2D? TryLoad(string path) => Exists(path) ? ResourceLoader.Load<Texture2D>(path) : null;
 }
